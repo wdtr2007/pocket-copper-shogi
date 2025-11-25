@@ -49,7 +49,48 @@
                     "+R3":  [ 2,8, -1,-2,-3,-4,-5,-6,-7,-8],
                     "+R4":  [ 2,8,  1, 2, 3, 4, 5, 6, 7, 8],
                     "+R5":  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    "+P":   [ 1,6,-1, 1, -12,-13,-14,    13     ]
+                    "+P":   [ 1,6,-1, 1, -12,-13,-14,    13     ],
+
+                    "k" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
+                    "g" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
+                    "s" :  [ 1,5,        12, 13, 14,-12,  -14  ],
+                    "c" :  [ 1,4,        12, 13, 14,   -13  ],
+                    "n" :  [ 1,2,  27 ,  25 ],
+                    "l" :  [ 2,1, 1],
+                    "l1":  [ 2, 8,  13, 26, 39, 52, 65, 78, 91, 104] ,
+                    "b" :  [ 2,1,4],
+                    "b1":  [ 2,8,  14, 28, 42, 56, 70, 84, 98, 112] ,
+                    "b2":  [ 2,8,  12, 24, 36, 48, 60, 72, 84, 96],
+                    "b3":  [ 2,8, -14,-28,-42,-56,-70,-84,-98,-112],
+                    "b4":  [ 2,8, -12,-24,-36,-48,-60,-72,-84,-96 ], 
+                    "r" :  [ 2,1,4],
+                    "r1":  [ 2,8, ] ,
+                    "r2":  [ 2,8, ],
+                    "r3":  [ 2,8, -1,-2,-3,-4,-5,-6,-7,-8],
+                    "r4":  [ 2,8,  1, 2, 3, 4, 5, 6, 7, 8],
+                    "p":   [ 1,1, 13 ],
+
+                    "+g" :  [ 1,7,-1, 1,  12, 13, 14,-12,  -14  ],
+                    "+s" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
+                    "+c" :  [ 1,5,        12, 13, 14,-12,  -14  ],
+                    "+n" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
+                    "+l" :  [ 2,1, 2],
+                    "+l1":  [ 2, 8,  13, 26, 39, 52, 65, 78, 91, 104] ,
+                    "+l2":  [ 2, 2, -13,13 ],
+                    "+b" :  [ 2,1,5],
+                    "+b1":  [ 2,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
+                    "+b2":  [ 2,8, -12,-24,-36,-48,-60,-72,-84,-96],
+                    "+b3":  [ 2,8,  14, 28, 42, 56, 70, 84, 98, 112],
+                    "+b4":  [ 2,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
+                    "+b5":  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
+                    "+r" :  [ 2,1,5],
+                    "+r1":  [ 2,8, ] ,
+                    "+r2":  [ 2,8, ],
+                    "+r3":  [ 2,8, -1,-2,-3,-4,-5,-6,-7,-8],
+                    "+r4":  [ 2,8,  1, 2, 3, 4, 5, 6, 7, 8],
+                    "+r5":  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
+                    "+p":   [ 1,6,-1, 1,  12, 13, 14,   -13     ]
+
 
                 }
 
@@ -222,7 +263,13 @@
                         return;
                     }
                     
-                    if (this.isValidMove(selectedRow, selectedCol, row, col)) {
+                    // jts fix comment out isvalidmove
+                    // validmoves are green and red 
+                    // do we need to a valid again?  yes maybe for check
+                    // comment code for now
+
+                    // jts if (this.isValidMove(selectedRow, selectedCol, row, col)) {
+                    if ( 1 == 1 ) {
                         this.makeMove(selectedRow, selectedCol, row, col);
                         this.selectedCell = null;
                         this.clearHighlights();
@@ -260,14 +307,16 @@
 
 
 
-            toRowj(ident1) {
-                let r =  parseInt ( (Number( right(ident1,3) ) +1) / 13 )
+            toRowj(nID) {
+                let a = nID + 1
+                let r =  parseInt ( (a/13) )
                 return r;
             }
 
-            toColj(ident1) {
-                let c = parseInt ( (Number( right(ident1,3) ) +1) % 13 )
-               return c;
+            toColj(nID) {
+                let a = nID                
+                let c = parseInt (  (a % 13) )
+                return ((c));
             }
 
             getAdjSquares(ident1) {
@@ -291,15 +340,17 @@
                 
                 const selectedCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                 var ident1 = selectedCell.id;
+                var nID = Number( right(ident1,3) );
                 
                 // jts get json value
                 // jts work in getvalidmoves
 
                 selectedCell.classList.add('selected');
 
-                const adjSquares = this.getAdjSquares(ident1);
+                let adjSquares = this.getAdjSquares(nID);
                 
-                const validMoves = this.getValidMoves(row, col);
+                var validMoves = this.getValidMoves(row, col, nID, adjSquares);
+
                 validMoves.forEach(([r, c]) => {
                     const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                     if (this.board[r][c] && this.board[r][c].player !== this.currentPlayer) {
@@ -330,32 +381,39 @@
                 });
             }
             
-            getValidMoves(row, col) {
+            getValidMoves(row, col, nID, adjSquares) {
+                // if a piece is not selected there are no valid moves
                 const piece = this.board[row][col];
                 if (!piece) return [];
                 
-                const moves = [];
-                const directions = this.getPieceDirections(piece.type, piece.player);
-                
-                directions.forEach(([dr, dc, range]) => {
-                    for (let i = 1; i <= range; i++) {
-                        const newRow = row + dr * i;
-                        const newCol = col + dc * i;
-                        
-                        if (newRow < 0 || newRow >= 11 || newCol < 0 || newCol >= 11) break;
-                        
-                        const targetPiece = this.board[newRow][newCol];
+                let moves = [];
+
+                if ( adjSquares[0]== 1 ) {
+                    let range = adjSquares[1];
+                    let adjpos = 2
+                    
+                    for (let x=1; x <= range; x++) {
+                        let new_nid = nID + adjSquares[adjpos];
+                        let newRow = this.toRowj(new_nid);
+                        let newCol = this.toColj(new_nid);
+                        adjpos++;
+                        if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 11) break;
+
+                        console.log(newRow, newCol);
+                        console.log(' ');
+                        let targetPiece = this.board[newRow][newCol];
                         if (targetPiece) {
                             if (targetPiece.player !== piece.player) {
                                 moves.push([newRow, newCol]);
                             }
-                            break;
                         } else {
                             moves.push([newRow, newCol]);
                         }
+
+
                     }
-                });
-                
+                }
+
                 return moves;
             }
             
