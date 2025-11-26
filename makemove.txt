@@ -1,0 +1,22 @@
+ makeMove(fromRow, fromCol, toRow, toCol) {
+                const piece = this.board[fromRow][fromCol];
+                const capturedPiece = this.board[toRow][toCol];
+                
+                if (capturedPiece) {
+                    let capturedType = capturedPiece.type.replace('+', '');
+                    this.capturedPieces[this.currentPlayer].push(capturedType);
+                }
+                
+                this.board[toRow][toCol] = piece;
+                this.board[fromRow][fromCol] = null;
+                
+                // Check for promotion
+                if (this.canPromote(piece, toRow)) {
+                    if (confirm('Promote this piece?')) {
+                        this.board[toRow][toCol].type = '+' + piece.type;
+                    }
+                }
+                
+                this.moveCount++;
+                this.renderBoard();
+            }
