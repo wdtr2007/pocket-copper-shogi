@@ -11,6 +11,7 @@ var v_move_ctr_for_pocket = 0;
 
 var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKGSNL1C";
 
+// 2nd commit
 var board = []; 
 
 class ShogiGame {
