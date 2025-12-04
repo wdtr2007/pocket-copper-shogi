@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shogi Game</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h2 class="game-title">将棋 - Pocket Copper Shogi</h2>
+        </div>
+        
+        <div class="game-info">
+            <div>Current Player: <span id="current-player">(Sente)</span></div>
+            <div>Moves: <span id="move-count">0</span></div>
+        </div>
+        
+        
+
+        <div class="board-container">
+            <div class="captured-pieces">
+                <div class="captured-title">Gote/White Captured</div>
+                <div id="white-captured"></div>
+            </div>
+            
+            <div class="board" id="board"></div> 
+
+            <div class="captured-pieces">
+                <div class="captured-title">Sente/Black Captured</div>
+                <div id="black-captured"></div>
+            </div>
+        </div>
+        
+        <div class="status-message" id="status"></div>
+        
+        <div class="controls">
+            <button onclick="game.newGame()">New Game</button>
+            <button onclick="game.showHelp()">Show Piece Guide</button>
+            <button onclick="game.FlipBoard()">Flip</button>
+         </div>
+    </div>
+
+    <script src="index2.js"></script>
+    
+</body>
+</html>
