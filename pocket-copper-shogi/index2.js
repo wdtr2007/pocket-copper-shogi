@@ -24,11 +24,53 @@ class ShogiGame {
                 this.flg_drop = 0;
 
                 // new when you hilight you put the saved highlights here
-                this.sav_mov_list = [];
+                this.sav_move_list_yel_green_red = [];
             
+                this.ImageXref = {                              
+                    "+B" :    "bH.png",                      
+                    "+b" :    "wH.png",                      
+                    "+C" :    "bO.png",                      
+                    "+c" :    "wO.png",                      
+                    "+G" :    "bE.png",                      
+                    "+g" :    "wE.png",                      
+                    "+L" :    "bM.png",                      
+                    "+m" :    "wM.png",                      
+                    "+N" :    "bpN.png",     
+                    "+n" :    "wpN.png",     
+                    "+P" :    "bT.png",
+                    "+p" :    "wT.png",
+                    "+R" :    "bD.png",                      
+                    "+r" :    "wD.png",                      
+                    "+S" : "bps,png" ,                    
+                    "+s" : "wps.png",                    
+                    "B" :    "bB.png",                      
+                    "b" :    "wB.png",                      
+                    "C" :    "bC.png",                      
+                    "c" :    "wC.png",                      
+                    "G" :    "bG.png",                      
+                    "g" :    "wG.png",                      
+                    "K" :   "bK.png",                       
+                    "k" :   "wK.png",                       
+                    "L" :    "bL.png",                      
+                    "l" :    "wL.png",                      
+                    "N" :    "bN.png",
+                    "n" :    "wN.png",
+                    "P" :    "bP.png",                      
+                    "p" :    "wP.png",                      
+                    "R" :    "bR.png",                      
+                    "r" :    "wR.png",                      
+                    "S" :    "bS.png",  
+                    "s" :    "wS.png",   
+                }	
+
+
+                
             
-        
+                // array info below
                 // 1 = jumper, 2 = slider, num of elements in array
+                // 3 = merge slider moves and jumper moves
+                //    example to move 1 square north you subtract 13
+                //    from the nID.
         
                 this.movesYouCanDo = {
                     "K" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
@@ -134,7 +176,7 @@ class ShogiGame {
                 this.selectedCell = null;
                 this.moveCount = 0;   
                 v_selection_flg=0;
-                this.sav_mov_list = [];
+                this.sav_move_list_yel_green_red = null;
                 this.objCap_pieces_sav = { black: [], white: [] };
                 this.gameOver = false;
                 
@@ -208,6 +250,10 @@ class ShogiGame {
             // when complete it will contain all the possible moves 1 color 
             // can make ... this will be used to determine if a king is in check
             // later on ... not used right now
+
+            // mv_bucket contains all the pieces that are friendly that are on board
+            // this excludes the drop zones
+
             generate_move_list(player) {
                 mv_bucket = [];
                 for ( let k=0; k < v_boardsize; k++) {
@@ -318,7 +364,7 @@ class ShogiGame {
                 this.selectedCell = null;
                 v_selection_flg = 0;
                 this.moveCount = 0;
-                this.sav_mov_list = [];
+                this.sav_move_list_yel_green_red = [];
                 this.objCap_pieces_sav = { black: [], white: [] };
                 this.gameOver = false;
                 let nop = 1;
@@ -419,11 +465,26 @@ class ShogiGame {
                             else { pieceElement.textContent = piece; } 
                             let span_id = "span" + row.toString().padStart(2,'0') + col.toString().padStart(2,'0')  
                             pieceElement.ID = span_id
-                            cell.appendChild(pieceElement);
+                            // cell.appendChild(pieceElement);
                         }
                         
+                        
+                        if ( piece !== "x") {
+                            let str_img = "images/" + this.ImageXref[ (piece) ];
+                            console.log(str_img);
+                            let img = document.createElement('img');
+                            img.setAttribute('src',str_img);
+                            let img_color = this.pieceColorShort(piece);
+                            let str_img_class = "img" + img_color;
+                            img.setAttribute('class',str_img_class);
+                            cell.appendChild(img)
+                        }
+
                         cell.addEventListener('click', () => this.onClick_cell(row, col));
                         boardElement.appendChild(cell);
+
+                        
+                        // END OF COL LOOP
                     }
                 }
                 
@@ -498,6 +559,9 @@ class ShogiGame {
                 return;
             }
 
+            // used in pass1
+            // used in pass2
+            //   on pass2 .... v_selection_flg=1
             onClick_cell(row, col) {
                 // if (this.gameOver) return;
                 
@@ -549,15 +613,20 @@ class ShogiGame {
 
                 // jts future work
                 // this is for a click on an empty square
-                if ( piece == "x" && v_selection_flg == 0) { 
-                    this.generate_move_list(this.currentPlayer);
-                    // this.process_mv_bucket;
-                }
+                // this is not ready yet
+                
+                //if ( piece == "x" && v_selection_flg == 0) { 
+                //    this.generate_move_list(this.currentPlayer);
+                //
+                //}
 
-                if ( this.pieceColorShort(piece) == this.currentPlayer) {
+                // go here on pass-1 only
+                if ( this.pieceColorShort(piece) === this.currentPlayer && v_selection_flg === 0) {
                     this.generate_move_list(this.currentPlayer);
                 }
                 
+                // on pass 1 there is nothing selected yet
+                // on pass 2 if you clicked the same square you are doing a deselect
                 if (this.selectedCell) {
                     const [selectedRow, selectedCol] = this.selectedCell;
                     
@@ -575,7 +644,7 @@ class ShogiGame {
 
                     // jts if (this.isValidMove(selectedRow, selectedCol, row, col)) {
 
-                    
+                    // pass2 - do your move and record a mess of stuff
                     if ( 1 == 1 ) {
                         this.makeMove(selectedRow, selectedCol, row, col);
                         this.selectedCell = null;
@@ -589,22 +658,36 @@ class ShogiGame {
                         if ( this.pieceColorShort(piece) === this.currentPlayer) {
                             this.f_make_yellow_select_cell(row, col);
                             v_selection_flg = 1;
-                            this.sav_mov_list.push( ([row,col]) );
+                            this.sav_move_list_yel_green_red.push( ([row,col]) );
                         }
                     }
 
                 // row col was not selected and we just did a 1st click    
                 } else {
+                    // on pass1 we make the cell yellow and get the system ready for pass 2
+                    // mv_list contains all the friendly pieces now
+
                     // if you own this cell blk/wh and you clicked it
                     // and it was not clicked before make the cell yellow
                     if ( this.pieceColorShort(piece) === this.currentPlayer) {
                         this.f_make_yellow_select_cell(row, col);
                         v_selection_flg = 1;
-                        this.sav_mov_list.push( ([row,col]) )
+                        
                     }
                 }
+                console.log("report onclick done", "yel green red is ", this.sav_move_list_yel_green_red);
+                if ( this.sav_move_list_yel_green_red.length === 0) {
+                    const audio = new Audio('sound/error.mp3');
+                    audio.play();
+                }
             }
+ 
             
+            // pass 1 ... we clicked on a real piece
+            //   set selected cell
+            //      find all moves you can make 
+            //      set square colors red yellow and green
+
             f_make_yellow_select_cell(row, col) {
                 this.selectedCell = [row, col];
                 this.highlightValidMoves(row, col);
@@ -684,10 +767,18 @@ class ShogiGame {
                 }
             }
 
+            // pass 1 
+            //  get the piece fen of the square you just clocked
+            //  convert to an nID
+            //  read the move array and run the loop
+
             highlightValidMoves(row, col) {
                 this.clearHighlights();
                 
                 const selectedCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+
+                // pass 1 
+                //    ident1 gets set to "div-nID" appends to html document
                 var ident1 = selectedCell.id;
                 var nID = Number( right(ident1,3) );
                 
@@ -697,32 +788,50 @@ class ShogiGame {
                 // selected square turns yellow if there is a piece there and
                 // the piece is the correct color for the turn
                 selectedCell.classList.add('selected');
+                this.sav_move_list_yel_green_red.push(nID);
     
+                //  pass1 
+                //      pass the nID and run the array
+                //      store in a possiblemoves array
                 let possibleMoves = this.getListOfSquaresYouCanMoveto(nID);
                 console.log('possible moves', possibleMoves)
                 
                 
+                // pass1
+                //    validmoves contains a list of everything that should be green or red
                 var validMoves = this.getValidMoves(row, col, nID, possibleMoves);
 
-                // the square of the enemy piece becomes red
-                // the square of an empty spot becomes green
+                // pass1
+                //     your clicked square is now yellow from prev method call
+                //     the square of the enemy piece becomes red
+                //     the square of an empty spot becomes green
+                //     if zero most likely an error - you clicked wrong square (guess right now)
                 validMoves.forEach(
                     ([r, c]) => {
                         const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                         var loc_color = this.pieceColorShort(board[ this.gensub(r,c) ]); 
                         console.log("r c cell loccolor curplayer",r,c,cell,loc_color,this.currentPlayer);
                         if ( loc_color !== this.currentPlayer && loc_color !== "none" ) {
+                            // pass 1 - enemy square goes red
                             cell.classList.add('enemy-piece');
                             v_move_ctr_for_pocket++;
+                            this.sav_move_list_yel_green_red.push( (this.gensub(r,c)) );
                         } else {
+                            // pass 1 - empty square - square goes green
                             cell.classList.add('valid-move');
                             v_move_ctr_for_pocket++;
+                            this.sav_move_list_yel_green_red.push( (this.gensub(r,c)) );
                         }
                     }
                 );
 
+                //  pass1
+                //    if you have any valid moves and your pocket is empty
+                //    make the pocket green so that you can pocket into that square
                 if ( v_move_ctr_for_pocket > 0 ) this.highlightValidMovesPocket(this.currentPlayer);
-                // end of section
+                
+                // end of section highlightvalidmoves
+                var nop = 1;
             }
             
             // needs work
@@ -750,8 +859,8 @@ class ShogiGame {
                 document.querySelectorAll('.cell').forEach(
                     cell => { cell.classList.remove('selected', 'valid-move', 'enemy-piece');  }
                 );
-                v_selection_flg=0;
-                this.sav_mov_list = [[,]];
+                v_selection_flg = 0;
+                this.sav_move_list_yel_green_red = [[,]];
                 
             }
             
@@ -835,7 +944,12 @@ class ShogiGame {
             }
 
 
-
+            // pass1 
+            //    run the move array-of-possible-moves
+            //    type-1  simple 1 move leap
+            //    type-2  complex slide move of rook or bishop
+            //    type-3  append-move after a type-2 add all type-1 moves
+            //            for example a dragon horse = bishop + king
             getValidMoves(row, col, nID, possibleMoves) {
                 // if a piece is not selected there are no valid moves
                 const piece = board[ this.gensub(row,col) ];
@@ -940,7 +1054,7 @@ class ShogiGame {
                     toCol.toString().padStart(2,'0');
                 v_move_array.push(move_string);
                 v_selection_flg = 0;
-                this.sav_mov_list = [[,]] ; 
+                this.sav_move_list_yel_green_red = [[,]] ; 
                 this.renderBoard();
                 this.renderCapturedPieces();
             }
@@ -1050,6 +1164,8 @@ class ShogiGame {
             // code here runs when button newgame is hit
             newGame() {
                 board=[];
+                const audio = new Audio('sound/start.mp3');
+                audio.play();
                 this.initializeBoard();
                 this.clearCells();
                 this.renderBoard();
