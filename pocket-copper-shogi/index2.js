@@ -22,6 +22,8 @@ class ShogiGame {
                 this.c2PieceFEN = "x1";
                 this.tot_moves = 0;
                 this.flg_drop = 0;
+                this.WhiteKing = 0;
+                this.BlackKing = 0;
 
                 // new when you hilight you put the saved highlights here
                 this.sav_move_list_yel_green_red = [];
@@ -35,14 +37,14 @@ class ShogiGame {
                     "+g" :    "wE.png",                      
                     "+L" :    "bM.png",                      
                     "+m" :    "wM.png",                      
-                    "+N" :    "bpN.png",     
-                    "+n" :    "wpN.png",     
+                    "+N" :   "bpN.png",     
+                    "+n" :   "wpN.png",     
                     "+P" :    "bT.png",
                     "+p" :    "wT.png",
                     "+R" :    "bD.png",                      
                     "+r" :    "wD.png",                      
-                    "+S" : "bps,png" ,                    
-                    "+s" : "wps.png",                    
+                    "+S" :  "bps.png" ,                    
+                    "+s" :   "wps.png",                    
                     "B" :    "bB.png",                      
                     "b" :    "wB.png",                      
                     "C" :    "bC.png",                      
@@ -60,7 +62,7 @@ class ShogiGame {
                     "R" :    "bR.png",                      
                     "r" :    "wR.png",                      
                     "S" :    "bS.png",  
-                    "s" :    "wS.png",   
+                    "s" :    "wS.png"
                 }	
 
 
@@ -295,69 +297,66 @@ class ShogiGame {
                 let ctrp=0;
                 this.flg_drop = 0;
                 
+                //ctrp is the number of squares you populate with a sfen
+                // it should always be 116 or you have an invalid sfen key
 
                 for (zp=0; zp < SFEN.length; zp++) {
-                    const char1 = (SFEN.substring(zp,(zp+1)));
+                    var char1 = (SFEN.substring(zp,(zp+1)));
+
+                    // hack ... Fen was designed as a 1 char
+                    //      promoted pieces are +{fen} so
+                    //      you have to make up a hack to accomodate a promoted piece.
+
+                    // Example: if sfen contains a +R it is a promoted piece of type Dragon
+                    // char1 will now contain 2 chars with a plus_piece fen code
+                    if (char1 === "+") {
+                        zp++;
+                        char1 = char1 + (SFEN.substring(zp,(zp+1)));
+                        board.push(char1) ;
+                        yp++;
+                        ctrp++;
+                        continue;  
+                    }
                     
                     
                     if (char1 > "0" && char1 <= "9" ) {
                         for (i = 1; i <= Number(char1); i++) {
-                            
                            board.push( "x");
-                           
-                            yp++;
-                            ctrp++
+                           yp++;
+                           ctrp++
                         }
-                    
-                    continue;
+                        continue;
                     }
+
                     if ( char1 >= "a" &&  char1 <= "z"   ) {
-                        
-                       board.push(char1) ;
-                    
+                        board.push(char1) ;
+                        if (char1 == 'k') this.WhiteKing = ctrp;
                         yp++;
-                    ctrp++;
-                    continue;
+                        ctrp++;
+                        continue;
                     }
 
                     if ( char1 == "/") {
-                        xp++; yp=0;
-                    continue;
+                        xp++; 
+                        yp=0;
+                        continue;
                     } 
 
                     // everything is uppercase now
                     if ( char1 >= "A" &&  char1 <= "Z"   ) {
-                        
-                       board.push(char1);
-                    
+                        board.push(char1);
+                        if (char1 == 'K') this.BlackKing = ctrp;
                         yp++;
-                    ctrp++;
-                    continue;
+                        ctrp++;
+                        continue;
                     }
 
                      
-
+                // end of for zp
                 }
 
                  console.log("ctrp is ", ctrp);
 
-                // Set up initial positions
-                // Gote (opponent) pieces (top of board)
-                //this.board[0] = ['','','l','n','s','g','k','g','s','n','l','',''].map(p => ({fen1: p, player: 'white'}));
-                //this.board[1][0] = {fen1: 'c', player: 'white'};
-                //this.board[1][3] = {fen1: 'r', player: 'white'};
-                //this.board[1][9] = {fen1: 'b', player: 'white'};
-                //this.board[2] = ['','','p','p','p','p','p','p','p','p','p','',''].map(p => ({fen1: p, player: 'white'}));
-
-                //this.board[3] = ['','','','','','','','','','','','',''].map(p => ({fen1: p, player: 'none'}));
-                //this.board[4] = ['','','','','','','','','','','','',''].map(p => ({fen1: p, player: 'none'}));
-                //this.board[5] = ['','','','','','','','','','','','',''].map(p => ({fen1: p, player: 'none'}));
-                
-                // Sente (player) pieces (bottom of board)
-                //this.board[6] = ['','','P','P','P','P','P','P','P','P','P','',''].map(p => ({fen1: p, player: 'black'}));
-                //this.board[7][3] = {fen1: 'B', player: 'black'};
-                //this.board[7][9] = {fen1: 'R', player: 'black'};
-                //this.board[8] = ['','','L','N','S','G','K','G','S','N','L','','C'].map(p => ({fen1: p, player: 'black'}));
                 
                 // Reset game state
                 this.currentPlayer = 'black';
@@ -370,6 +369,9 @@ class ShogiGame {
                 let nop = 1;
             }
             
+            // jts see if you want to clean this up
+            // if you keep an array of non-clear cells it would not have to run
+            // this again the entire board.
             clearCells() {
                 var divname;
                 let ctr = 0;
@@ -390,6 +392,9 @@ class ShogiGame {
                 return x;
             }
 
+            // fen logic ... uppercase is black
+            //     lowercase is white
+            //     x is code for an empty square
             pieceColorShort(char1) {
                 let a = "";
                 let b = "";
@@ -412,6 +417,9 @@ class ShogiGame {
 
             }
 
+            // this came from the original AI program
+            // it wanted to keep track of piece color
+            // this was used in the span html
             pieceColor(char1) {
                 let a = "";
                 let b = "";
@@ -447,6 +455,7 @@ class ShogiGame {
 
                 for (let row = 0; row < 9; row++) {
                     for (let col = 0; col < 13; col++) {
+                
                         const cell = document.createElement('div');
                         cell.className = 'cell';
                         if ( col == 1 || col == 11 ) cell.className = 'cell2'; 
@@ -625,7 +634,7 @@ class ShogiGame {
                     this.generate_move_list(this.currentPlayer);
                 }
                 
-                // on pass 1 there is nothing selected yet
+                // on pass 1 there is nothing selected yet ... this is skipped
                 // on pass 2 if you clicked the same square you are doing a deselect
                 if (this.selectedCell) {
                     const [selectedRow, selectedCol] = this.selectedCell;
