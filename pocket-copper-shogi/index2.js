@@ -1,5 +1,6 @@
 //dec-06 added gray
 //dec-08 added flip
+//dec-08 early work on takeback
 
 function right(str, num) {  return str.slice(-num); }
 function isLowerCase(str) { return str === str.toLowerCase(); }
