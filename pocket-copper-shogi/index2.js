@@ -1376,13 +1376,18 @@ class ShogiGame {
                 //  - if promoted then demote
                 //  - change color ... black is uppercase 
                 
-                if (temp_piece != "x") {    
+                if (temp_piece != "x") {
+                    v_move_array.push(("!CAP " + temp_piece));    
                     temp_piece = temp_piece.replace('+', ''); 
                     if (this.pieceColorShort(temp_piece)  == "white") { 
                         temp_piece = temp_piece.toUpperCase();
                         var empty_drop_spot = this.find_empty_black();
-                        if ( empty_drop_spot > 0) { board[empty_drop_spot] = temp_piece; }
-                        else { this.objCap_pieces_sav.black.push(temp_piece); }
+                        if ( empty_drop_spot > 0) { 
+                            board[empty_drop_spot] = temp_piece;
+                            v_move_array.push( ("!DROP " + empty_drop_spot.toString() ) ); 
+                        } else { 
+                            this.objCap_pieces_sav.black.push(temp_piece);
+                         }
                     } else {  
                         temp_piece = temp_piece.toLowerCase();
                         var empty_drop_spot = this.find_empty_white();
@@ -1499,7 +1504,8 @@ class ShogiGame {
                 f_sav_board();
                 f_flip_board();
                 this.renderBoard();  
-                this.updateStatus();              
+                this.updateStatus();  
+                v_move_array.push("!FLIP");            
                 return;
             }
             
