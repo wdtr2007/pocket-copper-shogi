@@ -1,6 +1,67 @@
 //dec-06 added gray
 //dec-08 added flip
 //dec-08 early work on takeback
+//dec-09 takeback seems to be working fairly well
+//       flip board messes up after a few flips and moves
+
+
+// global vars 
+
+var v_movepart = 0;
+var v_boardsize = 13 * 9;
+var x,y,z,i = 0;
+var mv_bucket = [[,]];
+var v_selection_flg = 0;
+var v_move_array = [];
+var v_move_action = [];
+var v_move_ctr_for_pocket = 0;
+
+var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKGSNL1C";
+var board = []; 
+var board_sav = [];
+var board_rev = [];
+
+// end of global vars
+
+
+// global functions - always sync
+
+    let mousePosition = { x: 0, y: 0 };
+
+    document.addEventListener('mousemove', (e) => {
+        mousePosition.x = e.clientX;
+        mousePosition.y = e.clientY;
+    });
+
+    document.addEventListener('keydown', (e) => {
+        // Check for the desired key (e.g., 'Enter' key)
+        if (e.key === 'Space') {
+            // Prevent default browser behavior for the keypress
+            e.preventDefault(); 
+            simulateClickAtCursor();
+        }
+    });
+
+    function simulateClickAtCursor() {
+        // Get the element at the current mouse coordinates
+        const elementToClick = document.elementFromPoint(mousePosition.x, mousePosition.y);
+
+        if (elementToClick) {
+            // Create a new MouseEvent
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                clientX: mousePosition.x,
+                clientY: mousePosition.y
+            });
+
+            // Dispatch the click event on the element
+            elementToClick.dispatchEvent(clickEvent);
+        }
+    }
+
+
+
 
 function right(str, num) {  return str.slice(-num); }
 function isLowerCase(str) { return str === str.toLowerCase(); }
@@ -11,20 +72,17 @@ function sync1() {
 //end sync1    
 } 
 
-var v_movepart = 0;
-var v_boardsize = 13 * 9;
-var x,y,z,i = 0;
-var mv_bucket = [[,]];
-var v_selection_flg = 0;
-var v_move_array = [];
-var v_move_ctr_for_pocket = 0;
+function substr1(str1,start,len) {
+    return str1.substring(start,(start+len));
+}
 
-var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKGSNL1C";
+setTimeout(function() { var nop=1;}, 1000);  // 1000 milliseconds = 1 second
 
-// 2nd commit
-var board = []; 
-var board_sav = [];
-var board_rev = [];
+function f_delay(time) {
+    return new Promise(resolve => setTimeout(resolve,time));
+}
+
+
 
 function f_sav_board() {
     board_sav = [];
@@ -44,7 +102,10 @@ function f_flip_board() {
     }
 }
 
+// end of global funs
 
+
+// begin class
 
 class ShogiGame {
             constructor() {
@@ -384,8 +445,25 @@ class ShogiGame {
                 // notice we did not switch player
                 // this is move zero
                 this.initializeBoard();
+
+                document.addEventListener('mousemove', (e) => {
+                    mousePosition.x = e.clientX;
+                    mousePosition.y = e.clientY;
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    // Check for the desired key (e.g., 'Enter' key)
+                    if (e.key === 'Space') {
+                        // Prevent default browser behavior for the keypress
+                        e.preventDefault(); 
+                        simulateClickAtCursor();
+                    }
+                });
+
                 this.renderBoard();
                 this.renderCapturedPieces();
+                this.currentPlayer = 'white';
+                this.switchPlayer();
                 this.updateStatus();
             }
 
@@ -585,14 +663,15 @@ class ShogiGame {
             }
 
             renderBoard() {
-                this.renderBoard_norm(); return;
-                if (this.flg_flip == 0) { this.renderBoard_norm(); return;}
-                this.renderBoard_flip();
-                return;
+                this.renderBoard_norm();
+                f_delay(9000);
             }
 
             renderBoard_flip() {
-                return;
+                var nop = 1;
+                
+
+                // jts this is old code .... i will clean-up later
                 const boardElement = document.getElementById('board');
                 boardElement.innerHTML = '';
 
@@ -710,26 +789,10 @@ class ShogiGame {
                 return; 
             }
 
-            renderGrayNess() {
+            renderGrayNess(gColor) {
                 sync1();
 
-                if (this.currentPlayer == 'black' ) {
-                    const myElements = document.querySelectorAll(".imgwhite");
-
-                    for (x=0; x < myElements.length; x++) {
-	                    myElements[x].style.opacity = '0.5';
-                    }
-
-                    const myElements2 = document.querySelectorAll(".imgblack");
-
-                    for (y=0; y < myElements2.length; y++) {
-	                    myElements2[y].style.opacity = '1.0';
-                    }
-                }
-
-                sync1();
-                    
-                if ( this.currentPlayer == 'white' ) {
+                if (gColor == 'white' ) {
                     const myElements = document.querySelectorAll(".imgwhite");
 
                     for (x=0; x < myElements.length; x++) {
@@ -740,6 +803,22 @@ class ShogiGame {
 
                     for (y=0; y < myElements2.length; y++) {
 	                    myElements2[y].style.opacity = '0.5';
+                    }
+                }
+
+                sync1();
+                    
+                if ( gColor == 'black' ) {
+                    const myElements = document.querySelectorAll(".imgwhite");
+
+                    for (x=0; x < myElements.length; x++) {
+	                    myElements[x].style.opacity = '0.5';
+                    }
+
+                    const myElements2 = document.querySelectorAll(".imgblack");
+
+                    for (y=0; y < myElements2.length; y++) {
+	                    myElements2[y].style.opacity = '1.0';
                     }
 
                 }
@@ -972,7 +1051,7 @@ class ShogiGame {
             // used in pass2
             //   on pass2 .... v_selection_flg=1
             onClick_cell(row, col) {
-                // if (this.gameOver) return;
+                if (this.gameOver) return;
                 
 
                 let piece = board[ this.gensub(row,col) ];
@@ -1147,7 +1226,7 @@ class ShogiGame {
                     ([r, c]) => {
                         const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                         var loc_color = this.pieceColorShort(board[ this.gensub(r,c) ]); 
-                        console.log("r c cell loccolor curplayer",r,c,cell,loc_color,this.currentPlayer);
+                         
                         if ( loc_color !== this.currentPlayer && loc_color !== "none" ) {
                             // pass 1 - enemy square goes red
                             cell.classList.add('enemy-piece');
@@ -1368,6 +1447,10 @@ class ShogiGame {
                 return false;
             }
             
+            // A move may be logged as 3 events in v_move_array
+            // !cap (piece) location where it was
+            // !drop (nID) location where is was dropped
+            // m (piece) from to 
             make_move(fromRow, fromCol, toRow, toCol) {
                 var piece = board[ (this.gensub(fromRow,fromCol)) ];
                 var temp_piece = board[ (this.gensub(toRow,toCol)) ];
@@ -1378,51 +1461,67 @@ class ShogiGame {
                 //  - change color ... black is uppercase 
                 
                 if (temp_piece != "x") {
-                    v_move_array.push(("!CAP " + temp_piece));    
+                    this.f_move_array_add( ("!CAP " + temp_piece + " " + toRow.toString().padStart(2,'0') +
+                                            toCol.toString().padStart(2,'0') ) );
                     temp_piece = temp_piece.replace('+', ''); 
                     if (this.pieceColorShort(temp_piece)  == "white") { 
                         temp_piece = temp_piece.toUpperCase();
                         var empty_drop_spot = this.find_empty_black();
                         if ( empty_drop_spot > 0) { 
                             board[empty_drop_spot] = temp_piece;
-                            v_move_array.push( ("!DROP " + empty_drop_spot.toString() ) ); 
+                            this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
                         } else { 
                             this.objCap_pieces_sav.black.push(temp_piece);
-                         }
+                        }
                     } else {  
                         temp_piece = temp_piece.toLowerCase();
                         var empty_drop_spot = this.find_empty_white();
-                        if ( empty_drop_spot > 0) { board[empty_drop_spot] = temp_piece; }
-                        else { this.objCap_pieces_sav.white.push(temp_piece); }
+                        if ( empty_drop_spot > 0) { 
+                            board[empty_drop_spot] = temp_piece;
+                            this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
+                        } else { 
+                            this.objCap_pieces_sav.white.push(temp_piece);
+                             
+                        }
 
                         
                     }
                 }
                 
-                
-               board[ this.gensub(toRow,toCol) ] = piece;
-               board[ this.gensub(fromRow,fromCol) ] = "x"; 
+               var msg = ""; 
+               var to_nID = this.gensub(toRow,toCol); 
+               var from_nID = this.gensub(fromRow,fromCol);
+               board[ to_nID ] = piece;
+               board[ from_nID ] = "x"; 
                 
                 // jts fix promotion for pawns, knights, and lance
                 // Check for promotion and must promote
                 if (this.mustPromote(piece,toRow) && this.flg_drop == 0) {
+                    msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
+                    v_move_array.push(msg);
                     piece = "+" + piece;
-                   board[ this.gensub(toRow,toCol) ] = piece;
+                    board[ to_nID ] = piece;
                 }
          
+                // if the mustpromote routine was a success
+                // the piece is now +p, if so this if statement is always false
                 if ( 
                       ( this.canPromote(piece, toRow) && this.flg_drop == 0) ||
                       ( this.canPromote(piece, fromRow) && this.flg_drop == 0)
                     ) 
                 {
                     if (confirm('Promote this piece?')) {
+                        msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0'); 
+                        v_move_array.push(msg);
                         piece = "+" + piece;
-                       board[ this.gensub(toRow,toCol) ] = piece;
+                        board[ this.gensub(toRow,toCol) ] = piece;
                     }
                 }
                 
                 this.moveCount++;
-                let move_string = piece + " " + fromRow.toString().padStart(2,'0') +
+                var move_xxx = this.moveCount.toString().padStart(3,'0');
+                let move_string = "m" + move_xxx + " " + piece + " " + 
+                    fromRow.toString().padStart(2,'0') +
                     fromCol.toString().padStart(2,'0') + "-" +
                     toRow.toString().padStart(2,'0') +
                     toCol.toString().padStart(2,'0');
@@ -1431,8 +1530,8 @@ class ShogiGame {
                 this.sav_move_list_yel_green_red = [] ; 
                 this.renderBoard();
                 this.renderCapturedPieces();
-                this.renderGrayNess();
                 this.switchPlayer();
+                this.updateStatus();
                 this.checkGameEnd();
                 return;
             }
@@ -1456,8 +1555,8 @@ class ShogiGame {
                 this.clearHighlights();
                 this.renderBoard();
                 this.renderCapturedPieces();
-                this.renderGrayNess();
                 this.switchPlayer();
+                this.updateStatus();
                 this.checkGameEnd();
             }
             
@@ -1496,7 +1595,13 @@ class ShogiGame {
             
             switchPlayer() {
                 this.currentPlayer = this.currentPlayer === 'black' ? 'white' : 'black';
-                this.updateStatus();
+                
+            }
+
+            f_move_array_add(str1) {
+               v_move_array.push(str1);
+               return;
+
             }
 
             onBtn_setFlipFlag() {
@@ -1506,7 +1611,7 @@ class ShogiGame {
                 f_flip_board();
                 this.renderBoard();  
                 this.updateStatus();  
-                v_move_array.push("!FLIP");            
+                this.f_move_array_add("!FLIP");            
                 return;
             }
             
@@ -1533,21 +1638,28 @@ class ShogiGame {
             }
             
             updateStatus() {
+                let gcolor = "";
                 document.getElementById('current-player').textContent = 
                     this.currentPlayer === 'black' ? '(Sente)' : '(Gote)';
                 document.getElementById('move-count').textContent = this.moveCount;
                 
                 if (!this.gameOver) {
                     let msg = "";
-                    if ( this.currentPlayer === 'black' ) { msg = "Sente's turn "; }
-                    else { msg = "Gote's turn "; }
+                    if ( this.currentPlayer === 'black' ) { 
+                        msg = "Sente's turn ";
+                        gcolor = "black"; 
+                    } else { 
+                        msg = "Gote's turn ";
+                        gcolor = "white"; 
+                    }
                     if (this.flg_flip == 0 ) { msg = msg + "- Sente's view"}
                     if (this.flg_flip == 1 ) { msg = msg + "- Gote's view"}
 
                     document.getElementById('status').textContent = msg; 
                         
-                    this.renderGrayNess();
+                    this.renderGrayNess(gcolor);
                 }
+
                 this.flg_drop = 0;
                 v_selection_flg = 0;
             }
@@ -1570,6 +1682,7 @@ class ShogiGame {
                 }
             }
 
+
             find_empty_black() {
                 let empty_pos = 0;
                 if (this.flg_flip == 0) {
@@ -1588,10 +1701,148 @@ class ShogiGame {
                 }
 
             }
+
+            
+
+            f_undo_cap(cmd) {
+                var line1 = cmd;
+                const rxfind = / /;
+                const rxout = line1.split(rxfind); 
+                console.log(rxout[0],rxout[1],rxout[2]);
+                //
+                var torow =   Number(substr1(rxout[2], 0,2));
+                var tocol =   Number(substr1(rxout[2], 2,2));
+                //
+                board[ ( this.gensub(torow,tocol) ) ] = (rxout[1]);
+                return;
+
+
+            }
+            
+            f_undo_flip(cmd) {
+                this.flg_flip = this.flg_flip === 0 ? 1 : 0 ;
+                f_sav_board();
+                f_flip_board();
+            }
+
+            // msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
+            f_undo_promote(cmd) {
+                var line1 = cmd;
+                const rxfind = / /;
+                const rxout = line1.split(rxfind); 
+                board[ (  Number(rxout[2]) ) ] = rxout[1];
+                return;
+            }
+
+            f_undo_drop(cmd) {
+                var line1 = cmd;
+                const rxfind = / /;
+                const rxout = line1.split(rxfind); 
+                console.log(rxout);
+                board[ (  Number(rxout[1]) ) ] = "x"
+                return;
+            }
+
+            // 01234567890  - adjpos values
+            //      012345678 - substr1 values
+            // m +P rrcc-rrcc
+            f_undo_move(cmd) {
+                var adjpos = 0;
+                var line1 = cmd; 
+                var char1 = substr1(line1,5,1); 
+                if (char1 == "+") { 
+                    char1 = char1 + substr1(line1,6,1) ; 
+                    adjpos = 8; 
+                }
+                else { adjpos = 7; }
+                
+                var fromrow = Number(substr1(line1,(adjpos+0),2));
+                var fromcol = Number(substr1(line1,(adjpos+2),2));
+                var torow =   Number(substr1(line1,(adjpos+5),2));
+                var tocol =   Number(substr1(line1,(adjpos+7),2));
+                var loc1 = this.gensub(fromrow,fromcol);
+                var loc2 = this.gensub(torow,tocol);
+                console.log(fromrow,fromcol,torow,tocol,loc1,loc2)
+                board[loc1] = char1;
+                board[loc2] = "x";
+
+            }
+
+            f_move_back_process(cmd,eop,mctr) {
+                var line1 = cmd;
+                
+                var char1 = substr1(line1,0,1);
+                switch (char1) {
+                    case "m":
+                        // i really don't understand the logic here
+                        // I want to do the while loop for two eop "m" array-elements
+                        // if the m array-element is eop=1 this is an end-of-process
+                        // indicator.  I want to skip the move and bubble up back to the
+                        // while loop 
+                        if ( mctr == 1) { this.f_undo_move(cmd); break; }
+                    case "!":
+                        if (line1.includes("!CAP "))     { this.f_undo_cap(cmd) ; break;}
+                        if (line1.includes("!DROP "))    { this.f_undo_drop(cmd); break;  }
+                        if (line1.includes("!FLIP "))    { this.f_undo_flip(cmd); break;}
+                        if (line1.includes("!PROMOTE ")) { this.f_undo_promote(cmd); break;}
+                        break;  
+                }
+                return;
+            } 
+
+            onBtn_goBack() {
+                // you can not do a back move until step #3
+                if ( v_move_array.length < 1) {
+                    const audio = new Audio('sound/error.mp3');
+                    audio.play();
+                    return;
+                }
+
+                
+                // end-of-process at zero we break the while loop
+                // logic:
+                // I want to process 1st m row and all !commands
+                // when I hit 2nd m row ... special exit
+                var mctr = 0;
+                var eop = 1;
+
+                while (eop > 0) {
+                    if ( v_move_array.length == 0) { eop=0; break;}
+                    var cmd = v_move_array[ (v_move_array.length - 1) ];
+                    console.log("back is " + cmd);
+                    var char1 = substr1(cmd,0,1);
+                     
+                    if (char1 == "m") {
+                        mctr++;
+                        if (mctr < 2  ) {
+                            this.f_move_back_process(cmd,eop,mctr) 
+                            this.renderBoard();
+                            this.switchPlayer();
+                            this.moveCount--;
+                            this.updateStatus();
+                            v_move_array.pop();
+                            f_delay(1000);
+                        } else { eop = 0; }
+                    }
+
+                    if (char1 != "m") {
+                        this.f_move_back_process(cmd,eop,mctr) 
+                        this.renderBoard();
+                        this.updateStatus();
+                        v_move_array.pop();
+                        f_delay(1000);
+
+                    
+                    }
+                    
+                } 
+            }
             
             // code here runs when button newgame is hit
             newGame() {
                 board=[];
+                v_move_array = [];
+                v_move_action = [];
                 const audio = new Audio('sound/start.mp3');
                 audio.play();
                 this.flg_flip = 0;
@@ -1599,7 +1850,8 @@ class ShogiGame {
                 this.clearCells();
                 this.renderBoard();
                 this.renderCapturedPieces();
-                this.renderGrayNess();
+                this.currentPlayer = 'white';
+                this.switchPlayer();          
                 this.updateStatus();
             }
             
