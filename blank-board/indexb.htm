@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shogi Game</title>
+    <link rel="stylesheet" type="text/css" href="indexb.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="game-header">
+            <h2 class="game-title">Board testing</h2>
+        </div>
+        
+        <div class="game-info">
+            <div>Current Player: <span id="current-player">(Sente)</span></div>
+            <div>Moves: <span id="move-count">0</span></div>
+        </div>
+        
+        
+
+        <div class="board-container">
+            <table class="grand">
+            <tr id="grand-row-1">
+                <td id="grand-col01">
+                    <table class="captured-pieces" id="wcp">
+                        <th class="wcp-hdr">Whi</th>
+                        <tr><td><span id="wcp01"></span></td> </tr>
+                        <tr><td><span id="wcp02"></span></td> </tr>
+                        <tr><td><span id="wcp03"></span></td> </tr>
+                        <tr><td><span id="wcp04"></span></td> </tr>
+                        <tr><td><span id="wcp05"></span></td> </tr>
+                        <tr><td><span id="wcp06"></span></td> </tr>
+                        <tr><td><span id="wcp07"></span></td> </tr>
+                        <tr><td><span id="wcp08"></span></td> </tr>
+                        <tr><td><span id="wcp09"></span></td> </tr>
+                    </table>
+                </td>
+                <td id="grand-col02">
+
+                
+                <table id="main-board" class="board">
+                    <tr><th>a</th><th>b</th><th>b</th><th>d</th><th>e</th><th>f</th><th>g</th><th>h</th><th>i</th><th>j</th><th>k</th><th>l</th><th>m</th></tr>
+                    <tr>
+                    <td><span class="cell" id="span000"></span></td>
+                    <td><span class="cell" id="span001"></span></td>
+                    <td><span class="cell" id="span002"></span></td>
+                    <td><span class="cell" id="span003"></span></td>
+                    <td><span class="cell" id="span004"></span></td>
+                    <td><span class="cell" id="span005"></span></td>
+                    <td><span class="cell" id="span006"></span></td>
+                    <td><span class="cell" id="span007"></span></td>
+                    <td><span class="cell" id="span008"></span></td>
+                    <td><span class="cell" id="span009"></span></td>
+                    <td><span class="cell" id="span010"></span></td>
+                    <td><span class="cell" id="span011"></span></td>
+                    <td><span class="cell" id="span012"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span013"></span></td>
+                    <td><span class="cell" id="span014"></span></td>
+                    <td><span class="cell" id="span015"></span></td>
+                    <td><span class="cell" id="span016"></span></td>
+                    <td><span class="cell" id="span017"></span></td>
+                    <td><span class="cell" id="span018"></span></td>
+                    <td><span class="cell" id="span019"></span></td>
+                    <td><span class="cell" id="span020"></span></td>
+                    <td><span class="cell" id="span021"></span></td>
+                    <td><span class="cell" id="span022"></span></td>
+                    <td><span class="cell" id="span023"></span></td>
+                    <td><span class="cell" id="span024"></span></td>
+                    <td><span class="cell" id="span025"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span026"></span></td>
+                    <td><span class="cell" id="span027"></span></td>
+                    <td><span class="cell" id="span028"></span></td>
+                    <td><span class="cell" id="span029"></span></td>
+                    <td><span class="cell" id="span030"></span></td>
+                    <td><span class="cell" id="span031"></span></td>
+                    <td><span class="cell" id="span032"></span></td>
+                    <td><span class="cell" id="span033"></span></td>
+                    <td><span class="cell" id="span034"></span></td>
+                    <td><span class="cell" id="span035"></span></td>
+                    <td><span class="cell" id="span036"></span></td>
+                    <td><span class="cell" id="span037"></span></td>
+                    <td><span class="cell" id="span038"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span039"></span></td>
+                    <td><span class="cell" id="span040"></span></td>
+                    <td><span class="cell" id="span041"></span></td>
+                    <td><span class="cell" id="span042"></span></td>
+                    <td><span class="cell" id="span043"></span></td>
+                    <td><span class="cell" id="span044"></span></td>
+                    <td><span class="cell" id="span045"></span></td>
+                    <td><span class="cell" id="span046"></span></td>
+                    <td><span class="cell" id="span047"></span></td>
+                    <td><span class="cell" id="span048"></span></td>
+                    <td><span class="cell" id="span049"></span></td>
+                    <td><span class="cell" id="span050"></span></td>
+                    <td><span class="cell" id="span051"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span052"></span></td>
+                    <td><span class="cell" id="span053"></span></td>
+                    <td><span class="cell" id="span054"></span></td>
+                    <td><span class="cell" id="span055"></span></td>
+                    <td><span class="cell" id="span056"></span></td>
+                    <td><span class="cell" id="span057"></span></td>
+                    <td><span class="cell" id="span058"></span></td>
+                    <td><span class="cell" id="span059"></span></td>
+                    <td><span class="cell" id="span060"></span></td>
+                    <td><span class="cell" id="span061"></span></td>
+                    <td><span class="cell" id="span062"></span></td>
+                    <td><span class="cell" id="span063"></span></td>
+                    <td><span class="cell" id="span064"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span065"></span></td>
+                    <td><span class="cell" id="span066"></span></td>
+                    <td><span class="cell" id="span067"></span></td>
+                    <td><span class="cell" id="span068"></span></td>
+                    <td><span class="cell" id="span069"></span></td>
+                    <td><span class="cell" id="span070"></span></td>
+                    <td><span class="cell" id="span071"></span></td>
+                    <td><span class="cell" id="span072"></span></td>
+                    <td><span class="cell" id="span073"></span></td>
+                    <td><span class="cell" id="span074"></span></td>
+                    <td><span class="cell" id="span075"></span></td>
+                    <td><span class="cell" id="span076"></span></td>
+                    <td><span class="cell" id="span077"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span078"></span></td>
+                    <td><span class="cell" id="span079"></span></td>
+                    <td><span class="cell" id="span080"></span></td>
+                    <td><span class="cell" id="span081"></span></td>
+                    <td><span class="cell" id="span082"></span></td>
+                    <td><span class="cell" id="span083"></span></td>
+                    <td><span class="cell" id="span084"></span></td>
+                    <td><span class="cell" id="span085"></span></td>
+                    <td><span class="cell" id="span086"></span></td>
+                    <td><span class="cell" id="span087"></span></td>
+                    <td><span class="cell" id="span088"></span></td>
+                    <td><span class="cell" id="span089"></span></td>
+                    <td><span class="cell" id="span090"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span091"></span></td>
+                    <td><span class="cell" id="span092"></span></td>
+                    <td><span class="cell" id="span093"></span></td>
+                    <td><span class="cell" id="span094"></span></td>
+                    <td><span class="cell" id="span095"></span></td>
+                    <td><span class="cell" id="span096"></span></td>
+                    <td><span class="cell" id="span097"></span></td>
+                    <td><span class="cell" id="span098"></span></td>
+                    <td><span class="cell" id="span099"></span></td>
+                    <td><span class="cell" id="span100"></span></td>
+                    <td><span class="cell" id="span101"></span></td>
+                    <td><span class="cell" id="span102"></span></td>
+                    <td><span class="cell" id="span103"></span></td>
+                    </tr>
+                    <tr>
+                    <td><span class="cell" id="span104"></span></td>
+                    <td><span class="cell" id="span105"></span></td>
+                    <td><span class="cell" id="span106"></span></td>
+                    <td><span class="cell" id="span107"></span></td>
+                    <td><span class="cell" id="span108"></span></td>
+                    <td><span class="cell" id="span109"></span></td>
+                    <td><span class="cell" id="span110"></span></td>
+                    <td><span class="cell" id="span111"></span></td>
+                    <td><span class="cell" id="span112"></span></td>
+                    <td><span class="cell" id="span113"></span></td>
+                    <td><span class="cell" id="span114"></span></td>
+                    <td><span class="cell" id="span115"></span></td>
+                    <td><span class="cell" id="span116"></span></td>
+                    </tr>
+
+
+                </table>
+                </td>
+                <td id="grand-col03">
+
+                                
+                <table class="captured-pieces2" id="bcp">
+                    <th class="bcp-hdr">Blk</th>
+                    <tr><td><span id="bcp01"></span></td> </tr>
+                    <tr><td><span id="bcp02"></span></td> </tr>
+                    <tr><td><span id="bcp03"></span></td> </tr>
+                    <tr><td><span id="bcp04"></span></td> </tr>
+                    <tr><td><span id="bcp05"></span></td> </tr>
+                    <tr><td><span id="bcp06"></span></td> </tr>
+                    <tr><td><span id="bcp07"></span></td> </tr>
+                    <tr><td><span id="bcp08"></span></td> </tr>
+                    <tr><td><span id="bcp09"></span></td> </tr>
+                </table>
+
+                </td>
+
+            </tr>
+            </table>    
+            
+        </div>
+        
+        <div class="status-message" id="status">
+        </div>
+        
+        <div class="controls">
+            <button onclick="game.newGame()">New Game</button>
+            <button onclick="game.showHelp()">Show Piece Guide</button>
+            <button onclick="game.onBtn_setFlipFlag()">Flip</button>
+            <button onclick="game.onBtn_goBack()">&lt;</button>
+         </div>
+    
+
+        <script src="indexb.js"></script>
+
+        <p></p>
+        <p>para2</p>
+
+        <form>
+            <input>
+            <input>
+            <button></button>
+        </form>
+    </div>
+
+</body>
+</html>

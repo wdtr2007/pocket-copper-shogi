@@ -1,0 +1,265 @@
+
+/* vh 90% vertical height */
+body {
+    font-family: 'Georgia', serif;
+    font-size: small;
+    background: linear-gradient(135deg, #8B4513, #DEB887);
+    margin: 0;
+    padding: 10px;
+    /*  min-height: 80vh; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.game-container {
+    background: #F5DEB3;
+    border-radius: 2px;
+    padding: 2px;
+ 
+    width: auto;
+    height: auto;
+}
+
+.p {
+    width: auto;
+    height: auto;
+}
+
+.game-header {
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.grand {
+    display: grid;
+    grid-template-columns: auto auto auto ; 
+    background: violet;
+    border-radius: 2px;
+    padding: auto;
+    width: auto;
+    display: flex;
+    height: auto;
+
+}
+
+/* em = element 1.3em is 130% bigger  */
+.game-title {
+    /* font-size: 0.9em; */
+    color: #8B4513;
+    margin: 0;
+    text-shadow: 2px 2px 2px rgba(0,0,0,0.1);
+}
+
+.wcb-hdr {
+    height: 20px;
+}
+
+.bcb-hdr {
+    height: 20px;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    
+    color: #654321;
+}
+
+.board-container {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    height: auto;
+    color: #90EE90;
+}
+
+
+
+.board {
+    display: grid;
+    grid-template-columns: 62px 62px 62px 62px 62px  62px 62px  62px 62px  62px 62px  62px 62px ;
+    grid-template-rows: 20px, 62px 62px 62px 62px 62px  62px 62px  62px 62px;
+    gap: 2px;
+    background: #8B4513;
+    padding: 10px;
+    border-radius: 8px;
+    width: auto ;
+    height: auto;
+    /* box-shadow: 0 5px 15px rgba(0,0,0,0.2); */
+}
+
+
+.front, .back {
+    backface-visibility: hidden;
+    transition: transform 2s; /* Duration of the flip */
+}
+
+.front {
+    background-color: lightblue;
+}
+
+.back {
+    background-color: lightcoral;
+    transform: rotateY(180deg);
+}
+
+
+.cell2 {
+    width: 60px;
+    height: 60px;
+    background: #F4A460;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: normal;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.cell2:hover {
+    background: #DEB887;
+    transform: scale(1);
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    background: #F4A460;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.cell:hover {
+    background: #DEB887;
+    transform: scale(1);
+}
+
+.cell.selected {
+    background: #FFD700 !important;
+    box-shadow: 0 0 10px #FFD700;
+}
+
+.cell.valid-move {
+    background: #90EE90 !important;
+}
+
+.cell.enemy-piece {
+    background: #FFB6C1 !important;
+}
+
+.piece {
+    color: #000;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+    user-select: none;
+}
+
+.piece.black {
+    transform: rotate(0deg);
+}
+
+.imgwhite {
+    transform: rotate(0deg);
+    opacity: 0.5;
+}
+
+.imgblack {
+    transform: rotate(0deg);
+    opacity: 1.0;
+}
+.piece.white {
+    color:white;
+    transform: rotate(180deg);
+    
+}
+
+.captured-pieces {
+    background: #F0E68C;
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 180px;
+    width: 25px;
+}
+
+.captured-pieces2 {
+    background: cadetblue;
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 180px;
+    width: 25px;
+}
+
+
+.captured-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #8B4513;
+    text-align: center;
+}
+
+.captured-piece {
+    display: inline-block;
+    margin: 2px;
+    padding: 4px 8px;
+    background: #FFF8DC;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.captured-piece2 {
+    display: inline-block;
+    margin: 2px;
+    padding: 4px 8px;
+    background: #FFF8DC;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.captured-piece:hover {
+    background: #FFE4B5;
+}
+
+.status-message {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #8B4513;
+    min-height: 30px;
+}
+
+.controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+button {
+    background: #8B4513;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #A0522D;
+}

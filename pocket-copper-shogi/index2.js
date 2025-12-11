@@ -20,11 +20,16 @@ var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKG
 var board = []; 
 var board_sav = [];
 var board_rev = [];
+var board_xref = [];
+var board_element = [];
 
 // end of global vars
 
 
 // global functions - always sync
+
+
+
 
     let mousePosition = { x: 0, y: 0 };
 
@@ -81,6 +86,7 @@ setTimeout(function() { var nop=1;}, 1000);  // 1000 milliseconds = 1 second
 function f_delay(time) {
     return new Promise(resolve => setTimeout(resolve,time));
 }
+
 
 
 
@@ -467,6 +473,38 @@ class ShogiGame {
                 this.updateStatus();
             }
 
+            print_board() {
+                var msg = "";
+                var char1 = "";
+                var x=0; var y=0;
+                console.log("xx-00-01-02-03-04-05-06-07-08-09-10-11-12");
+                for (x=0; x < 9; x++) {
+                    msg = x.toString().padStart(2,'0') + " ";
+                    for (y=0; y < 13; y++) {
+                        char1 = board[  ( this.gensub(x, y) ) ];
+                        if (char1.length == 1) char1 = char1 + "  ";
+                        if (char1.length == 2) char1 = char1 + " ";
+                        msg = msg + char1;
+                    }
+                    console.log(msg);
+                }
+
+            }
+
+            generate_board_xref() {
+                var ctr1 = 0;
+                var ctr2;
+
+                for (x=0; x<9; x++) {
+                    for (y=0; y<13; y++) {
+                        ctr1 = this.gensub(x,y);
+                        ctr2 = 116 - ctr1;
+                        board_xref.push( ([ctr1,ctr2]) ) ; 
+                    }
+                }
+            }
+
+
             // this is to populate the move bucket
             // when complete it will contain all the possible moves 1 color 
             // can make ... this will be used to determine if a king is in check
@@ -506,7 +544,10 @@ class ShogiGame {
                 return mv_bucket; 
             }
             
+            // this section is run when the "new game" button is hit
+
             initializeBoard() {
+                this.renderBoard_once();
                 // Clear brd
                 //brd = Array(9).fill(null).map(  () => Array(13).fill(null)  );
                 v_movepart = 0;
@@ -516,6 +557,7 @@ class ShogiGame {
                 let zp=0;
                 let ctrp=0;
                 this.flg_drop = 0;
+                this.generate_board_xref();
                 
                 //ctrp is the number of squares you populate with a sfen
                 // it should always be 116 or you have an invalid sfen key
@@ -663,6 +705,7 @@ class ShogiGame {
             }
 
             renderBoard() {
+                sync1();
                 this.renderBoard_norm();
                 f_delay(9000);
             }
@@ -730,13 +773,13 @@ class ShogiGame {
                 
             }
 
-            renderBoard_norm() {
+            
+            renderBoard_once() {
                 const boardElement = document.getElementById('board');
                 boardElement.innerHTML = '';
-
-                var divname;
-                let ctr = 0;
-                
+                var ctr = 0;
+                var divname = "div000";
+                var nID = 0;
 
                 for (let row = 0; row < 9; row++) {
                     for (let col = 0; col < 13; col++) {
@@ -746,24 +789,49 @@ class ShogiGame {
                         if ( col == 1 || col == 11 ) cell.className = 'cell2'; 
                         cell.dataset.row = row;
                         cell.dataset.col = col;
-                        divname = "div" + ctr.toString().padStart(3, '0');
+                        nID = this.gensub(row,col);
+                        cell.dataset.nID = nID;
+                        divname = "div" + nID.toString().padStart(3, '0');
                         cell.id = divname; 
                         ctr++;
                         
 
+                        cell.addEventListener('click', () => this.onClick_cell( cell.id ) );
+                        boardElement.appendChild(cell);
+                        var nop = 0;
+                        nop++;
+
+                        
+                        // END OF COL LOOP
+                    }
+                    // end of row loop
+                }
+                // end of method
+                return; 
+
+            }
+
+            renderBoard_norm() {
+                
+                var divname;
+                let ctr = 0;
+                var nID;
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 13; col++) {
+                        nID = this.gensub(row,col);
+                        divname = "div" + nID.toString().padStart(3, '0');
+                                        
+                        const cellElement = document.getElementById(divname); 
+                        var msg = divname + " " + cellElement.innerHTML;
+                        console.log(msg);
+
                         const piece = board[ this.gensub(row,col) ];
-                        if (piece) {
-                            const pieceElement = document.createElement('span');
-                            pieceElement.className = this.pieceColor(piece);
-                            if ( piece == "x") { pieceElement.textContent = " "; } 
-                            else { pieceElement.textContent = piece; } 
-                            let span_id = "span" + row.toString().padStart(2,'0') + col.toString().padStart(2,'0')  
-                            pieceElement.ID = span_id
-                            //cell.appendChild(pieceElement);
-                        }
                         
-                        
-                        if ( piece !== "x") {
+                        if ( piece === "x" && cellElement.innerHTML.length > 0 ) sync1(); 
+                        if ( piece === "x") { cellElement.innerHTML='';}
+                        else {
+                            cellElement.innerHTML='';
                             let str_img = "images/" + this.ImageXref[ (piece) ];
                             let img = document.createElement('img');
                             img.setAttribute('src',str_img);
@@ -772,15 +840,11 @@ class ShogiGame {
                             img.setAttribute('class',str_img_class);
                             if ( this.flg_flip == 1) img.style.transform= "rotate(180deg)";
                             if ( this.flg_flip == 0) img.style.transform= "rotate(0deg)"
-                            cell.appendChild(img)
+                            cellElement.appendChild(img)
                         }
 
-                        cell.addEventListener('click', () => this.onClick_cell(row, col));
-                        boardElement.appendChild(cell);
-                        var nop = 0;
-                        nop++;
-
-                        
+                       
+                                                
                         // END OF COL LOOP
                     }
                     // end of row loop
@@ -879,8 +943,8 @@ class ShogiGame {
 
                 }
 
-            make_yellow(row,col) {
-                this.f_make_yellow_select_cell(row, col);
+            make_yellow(nID) {
+                this.f_make_yellow_select_cell(nID);
                 var nop = 1;
                 nop++;
                 return;
@@ -888,44 +952,68 @@ class ShogiGame {
 
             }
             
-            make_green(row,col) {
+            make_green(nID) {
                 //this.onClick_CapturePieceWhite(gp, 'white'));
                 //this.onClick_CapturePieceBlack(gp, 'black'));
                 this.highlightDropZones();
                 return;
             }
 
+                        // used in pass1
+            // used in pass2
+            //   on pass2 .... v_selection_flg=1
+            onClick_cell( str_nID ) {
+                if (this.gameOver) return;
+                
+                const nID = Number(substr1(str_nID,3,3));
 
-            onClick_cell_pass1(row,col,piece) {
+                let piece = board[ nID ];
+
+                if ( v_selection_flg === 0 )  {
+                    let rc = this.onClick_cell_pass1(nID,piece);
+                    if (rc == 0 ) v_selection_flg = 1;
+                } else {
+                    this.onClick_cell_pass2(nID,piece);
+                    v_selection_flg = 0;
+                }    
+                var nop = 1;    
+            }
+ 
+
+
+
+            onClick_cell_pass1(nID,piece) {
 
                 // pass1 pocket pocket col0(pre-move drop) col12(pre-move drop)
+
+                var col = nID % 13;
 
                 
 
                 if ( col == 0 && this.currentPlayer === "black" && this.flg_flip == 1 ) {
-                    this.onClick_cell_pass1_drop_type(row,col,"black");
+                    this.onClick_cell_pass1_drop_type(nID,"black");
                     return;
                 }
 
                 if ( col == 0 && this.currentPlayer === "white" && this.flg_flip == 0 ) {
-                    this.onClick_cell_pass1_drop_type(row,col,"white");
+                    this.onClick_cell_pass1_drop_type(nID,"white");
                     return;
                 }
  
                 if (col == 12 && this.currentPlayer === "black" && this.flg_flip == 0 ) {
-                    this.onClick_cell_pass1_drop_type(row,col,"black");
+                    this.onClick_cell_pass1_drop_type(nID,"black");
                     return;
                 }
 
                 if (col == 12 && this.currentPlayer === "white" && this.flg_flip == 1 ) {
-                    this.onClick_cell_pass1_drop_type(row,col,"white");
+                    this.onClick_cell_pass1_drop_type(nID,"white");
                     return;
                 }
 
                 // enter if ... on pass-1 only  this is work for a pre-move type
                 if ( this.pieceColorShort(piece) === this.currentPlayer && v_selection_flg === 0) {
                     this.generate_move_list(this.currentPlayer);
-                    this.f_make_yellow_select_cell(row, col);
+                    this.f_make_yellow_select_cell( nID );
                     v_selection_flg = 1;
                 }
 
@@ -945,35 +1033,37 @@ class ShogiGame {
                 
             }
 
-            onClick_cell_pass2(row,col,piece) {
+            onClick_cell_pass2(nID,piece) {
 
                 // jts this is a un-testped patch
                 // if you are in this method --- I think
                 //  this selected cell is always on I need to test this dec 06
                 if ( this.selectedCell) {
-                    this.onClick_cell_pass2_move_type(row,col);
+                    this.onClick_cell_pass2_move_type(nID);
                     return;
                 }
+
+                var col = nID % 13;
                 
 
                 if ( col == 0 && this.currentPlayer === "white"  ) {
-                    this.onClick_cell_pass2_drop_type(row,col,"white");
+                    this.onClick_cell_pass2_drop_type(nID,"white");
                     return;
                 }
 
                 if (col == 12 && this.currentPlayer === "black" ) {
-                    this.onClick_cell_pass2_drop_type(row,col,"black");
+                    this.onClick_cell_pass2_drop_type(nID,"black");
                     return;
                 }
 
-                this.onClick_cell_pass2_move_type(row,col);
+                this.onClick_cell_pass2_move_type(nID);
                 return;
 
             }
 
-            onClick_cell_pass1_drop_type(row,col,color) {
+            onClick_cell_pass1_drop_type(nID,color) {
 
-                this.dzPieceInHand = board[ this.gensub(row,col) ];
+                this.dzPieceInHand = board[ nID ];
                 const piece = this.dzPieceInHand;
 
                 if ( color === "white") {
@@ -984,26 +1074,26 @@ class ShogiGame {
                     this.onClick_CapturePieceBlack(piece, this.currentPlayer);
                 }
                 
-                this.make_yellow(row,col)
-                this.make_green(row,col);
+                this.make_yellow(nID)
+                this.make_green(nID);
 
                 v_selection_flg = 1; 
                 return;
             }
 
-            onClick_cell_pass1_move_type(row,col) {
-                const piece = board[ this.gensub(row,col) ];
+            onClick_cell_pass1_move_type(nID) {
+                const piece = board[ nID ];
             }
 
-            onClick_cell_pass2_drop_type(row,col) {
-                const piece = board[ this.gensub(row,col) ];
+            onClick_cell_pass2_drop_type(nID) {
+                const piece = board[ nID ];
             }
 
-            onClick_cell_pass2_move_type(row,col) {
+            onClick_cell_pass2_move_type(nID) {
                 if (this.selectedCell) {
-                    const [selectedRow, selectedCol] = this.selectedCell;
+                    const [selectednID] = this.selectedCell;
                     
-                    if (selectedRow === row && selectedCol === col) {
+                    if (selectednID === nID ) {
                         // Deselect
                         this.selectedCell = null;
                         this.clearHighlights(); 
@@ -1015,14 +1105,16 @@ class ShogiGame {
                     // do we need to a valid again?  yes maybe for check
                     // comment code for now
 
-                    var pass2_ready = this.isValidMove(selectedRow, selectedCol, row, col); 
+                    
+                    var pass2_ready = this.isValidMove(selectednID, nID); 
 
                     // pass2 - do your move and record a mess of stuff
                     if ( pass2_ready ) {
-                        this.make_move(selectedRow, selectedCol, row, col);
+                        this.make_move(selectednID, nID);
                         this.selectedCell = null;
                         this.clearHighlights();
                         v_selection_flg = 0;
+                        this.print_board();
                     } else {
                         this.selectedCell = null;
                         this.clearHighlights();
@@ -1047,30 +1139,13 @@ class ShogiGame {
             }
 
 
-            // used in pass1
-            // used in pass2
-            //   on pass2 .... v_selection_flg=1
-            onClick_cell(row, col) {
-                if (this.gameOver) return;
-                
-
-                let piece = board[ this.gensub(row,col) ];
-
-                if ( v_selection_flg === 0 )  {
-                    let rc = this.onClick_cell_pass1(row,col,piece);
-                    if (rc == 0 ) v_selection_flg = 1;
-                } else {
-                    this.onClick_cell_pass2(row,col,piece);
-                    v_selection_flg = 0;
-                }    
-                var nop = 1;    
-            }
- 
             
        
-            f_make_yellow_select_cell(row, col) {
-                this.selectedCell = [row, col];
-                this.highlightValidMoves(row, col);
+            f_make_yellow_select_cell(nID) {
+                const row = Math.trunc(nID);
+                const col = nID % 13;
+                this.selectedCell = [nID];
+                this.highlightValidMoves(nID);
             }
             
             onClick_CapturePieceBlack(pieceType, player) {
@@ -1188,15 +1263,12 @@ class ShogiGame {
             //  convert to an nID
             //  read the move array and run the loop
 
-            highlightValidMoves(row, col) {
+            highlightValidMoves(nID) {
                 this.clearHighlights();
                 
-                const selectedCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-
-                // pass 1 
-                //    ident1 gets set to "div-nID" appends to html document
-                var ident1 = selectedCell.id;
-                var nID = Number( right(ident1,3) );
+                var divname = "div" + nID.toString().padStart(3, '0');
+                                        
+                const selectedCell  = document.getElementById(divname);
                 
                 // jts get json value
                 // jts work in getvalidmoves
@@ -1215,7 +1287,7 @@ class ShogiGame {
                 
                 // pass1
                 //    validmoves contains a list of everything that should be green or red
-                var validMoves = this.getValidMoves(row, col, nID, possibleMoves);
+                var validMoves = this.getValidMoves(nID, possibleMoves);
 
                 // pass1
                 //     your clicked square is now yellow from prev method call
@@ -1282,8 +1354,8 @@ class ShogiGame {
                 
             }
             
-            getValidMovesSlider(row,col,nID,numSections) {
-                const piece = board[ this.gensub(row,col) ];
+            getValidMovesSlider(nID,numSections) {
+                const piece = board[ nID ];
                                 
                 let moves2 = [];
                 
@@ -1377,9 +1449,9 @@ class ShogiGame {
             //    type-2  complex slide move of rook or bishop
             //    type-3  append-move after a type-2 add all type-1 moves
             //            for example a dragon horse = bishop + king
-            getValidMoves(row, col, nID, possibleMoves) {
+            getValidMoves(nID, possibleMoves) {
                 // if a piece is not selected there are no valid moves
-                const piece = board[ this.gensub(row,col) ];
+                const piece = board[ nID ];
                 if ( piece == "x" ) return [];
                 
                 let moves = [];
@@ -1388,7 +1460,7 @@ class ShogiGame {
                     // ut oh ... this is a sliding piece like a bishop
                     // this is more complex to figure out
                     // go to a new method to do that
-                    moves = this.getValidMovesSlider(row,col,nID,possibleMoves[2]);
+                    moves = this.getValidMovesSlider(nID,possibleMoves[2]);
                     return moves;
                 }
   
@@ -1425,9 +1497,9 @@ class ShogiGame {
             
             
             
-            isValidMove(fromRow, fromCol, toRow, toCol) {
-                var start_pt = this.gensub(fromRow,fromCol);
-                var end_pt = this.gensub(toRow,toCol);
+            isValidMove(fromNID, toNID ) {
+                var start_pt = fromNID ;
+                var end_pt = toNID;
                 var piece = board[start_pt];
                 var piece2 = board[end_pt];
                 if (piece === 'x') return false;
@@ -1451,9 +1523,9 @@ class ShogiGame {
             // !cap (piece) location where it was
             // !drop (nID) location where is was dropped
             // m (piece) from to 
-            make_move(fromRow, fromCol, toRow, toCol) {
-                var piece = board[ (this.gensub(fromRow,fromCol)) ];
-                var temp_piece = board[ (this.gensub(toRow,toCol)) ];
+            make_move(fromNID , toNID) {
+                var piece = board[ fromNID ];
+                var temp_piece = board[ toNID ];
                 
                 
                 // at the move did the target square have a piece on it? if yes ...
@@ -1461,8 +1533,7 @@ class ShogiGame {
                 //  - change color ... black is uppercase 
                 
                 if (temp_piece != "x") {
-                    this.f_move_array_add( ("!CAP " + temp_piece + " " + toRow.toString().padStart(2,'0') +
-                                            toCol.toString().padStart(2,'0') ) );
+                    this.f_move_array_add( ("!CAP " + temp_piece + " " + toNID.toString().padStart(3,'0') ) );
                     temp_piece = temp_piece.replace('+', ''); 
                     if (this.pieceColorShort(temp_piece)  == "white") { 
                         temp_piece = temp_piece.toUpperCase();
@@ -1489,14 +1560,14 @@ class ShogiGame {
                 }
                 
                var msg = ""; 
-               var to_nID = this.gensub(toRow,toCol); 
-               var from_nID = this.gensub(fromRow,fromCol);
+               var to_nID = toNID; 
+               var from_nID = fromNID;
                board[ to_nID ] = piece;
                board[ from_nID ] = "x"; 
                 
                 // jts fix promotion for pawns, knights, and lance
                 // Check for promotion and must promote
-                if (this.mustPromote(piece,toRow) && this.flg_drop == 0) {
+                if (this.mustPromote(piece,toNID) && this.flg_drop == 0) {
                     msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
                     v_move_array.push(msg);
                     piece = "+" + piece;
@@ -1506,28 +1577,27 @@ class ShogiGame {
                 // if the mustpromote routine was a success
                 // the piece is now +p, if so this if statement is always false
                 if ( 
-                      ( this.canPromote(piece, toRow) && this.flg_drop == 0) ||
-                      ( this.canPromote(piece, fromRow) && this.flg_drop == 0)
+                      ( this.canPromote(piece, toNID) && this.flg_drop == 0) ||
+                      ( this.canPromote(piece, fromNID) && this.flg_drop == 0)
                     ) 
                 {
                     if (confirm('Promote this piece?')) {
                         msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0'); 
                         v_move_array.push(msg);
                         piece = "+" + piece;
-                        board[ this.gensub(toRow,toCol) ] = piece;
+                        board[ to_nID ] = piece;
                     }
                 }
                 
                 this.moveCount++;
                 var move_xxx = this.moveCount.toString().padStart(3,'0');
                 let move_string = "m" + move_xxx + " " + piece + " " + 
-                    fromRow.toString().padStart(2,'0') +
-                    fromCol.toString().padStart(2,'0') + "-" +
-                    toRow.toString().padStart(2,'0') +
-                    toCol.toString().padStart(2,'0');
+                    fromNID.toString().padStart(3,'0') + "-" +
+                    toNID.toString().padStart(3,'0') ;
                 v_move_array.push(move_string);
                 v_selection_flg = 0;
                 this.sav_move_list_yel_green_red = [] ; 
+                
                 this.renderBoard();
                 this.renderCapturedPieces();
                 this.switchPlayer();
@@ -1560,7 +1630,8 @@ class ShogiGame {
                 this.checkGameEnd();
             }
             
-            mustPromote(piece, row) {
+            mustPromote(piece, nID) {
+                var row = this.toRowj(nID)
                 if ( piece.length == 1) {
                     if ( ['L','P'].includes(piece) && row < 1 && this.flg_flip == 0) return true;
                     if ( ['L','P'].includes(piece) && row > 7 && this.flg_flip == 1) return true;
@@ -1578,7 +1649,9 @@ class ShogiGame {
                 return false; 
             }
 
-            canPromote(piece, row) {
+            canPromote(piece, nID) {
+                const row = this.toRowj(nID);
+                if (piece == 'x' ) return false;
                 if (piece.startsWith('+')) return false;
                 if (['K','k'].includes(piece)) return false;
                 
@@ -1710,10 +1783,10 @@ class ShogiGame {
                 const rxout = line1.split(rxfind); 
                 console.log(rxout[0],rxout[1],rxout[2]);
                 //
-                var torow =   Number(substr1(rxout[2], 0,2));
-                var tocol =   Number(substr1(rxout[2], 2,2));
+                var toLoc =   Number(substr1(rxout[2], 0,3));
+                
                 //
-                board[ ( this.gensub(torow,tocol) ) ] = (rxout[1]);
+                board[  toLoc ] = (rxout[1]);
                 return;
 
 
@@ -1743,9 +1816,9 @@ class ShogiGame {
                 return;
             }
 
-            // 01234567890  - adjpos values
+            // 01234567890123  - adjpos values
             //      012345678 - substr1 values
-            // m +P rrcc-rrcc
+            // mxxx +P nid-nid
             f_undo_move(cmd) {
                 var adjpos = 0;
                 var line1 = cmd; 
@@ -1756,13 +1829,11 @@ class ShogiGame {
                 }
                 else { adjpos = 7; }
                 
-                var fromrow = Number(substr1(line1,(adjpos+0),2));
-                var fromcol = Number(substr1(line1,(adjpos+2),2));
-                var torow =   Number(substr1(line1,(adjpos+5),2));
-                var tocol =   Number(substr1(line1,(adjpos+7),2));
-                var loc1 = this.gensub(fromrow,fromcol);
-                var loc2 = this.gensub(torow,tocol);
-                console.log(fromrow,fromcol,torow,tocol,loc1,loc2)
+                var fromNID = Number(substr1(line1,(adjpos+0),3));
+                var toNID   = Number(substr1(line1,(adjpos+5),3));
+                var loc1 = fromNID; 
+                var loc2 = toNID; 
+                console.log("undo move ", loc1,loc2)
                 board[loc1] = char1;
                 board[loc2] = "x";
 
