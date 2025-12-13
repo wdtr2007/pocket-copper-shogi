@@ -3,6 +3,7 @@
 //dec-08 early work on takeback
 //dec-09 takeback seems to be working fairly well
 //       flip board messes up after a few flips and moves
+//dec-12 added form button on top - flip is close to working
 
 
 // global vars 
