@@ -4,6 +4,8 @@
 //dec-09 takeback seems to be working fairly well
 //       flip board messes up after a few flips and moves
 //dec-12 added form button on top - flip is close to working
+//dec-13 having sync problems 12:30pm
+
 
 
 // global vars 
@@ -20,7 +22,6 @@ var v_move_ctr_for_pocket = 0;
 var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKGSNL1C";
 var board = []; 
 var board_sav = [];
-var board_rev = [];
 var board_xref = [];
 var board_element = [];
 
@@ -48,6 +49,19 @@ document.addEventListener('keydown', (e) => {
         simulateClickAtCursor();
     }
 });
+
+
+function jwait(msec) {
+    const wait = (msec) => new Promise((resolve, _) => { setTimeout(resolve, msec); });
+
+    (async () => {
+    
+    await wait(1000);
+    
+    })
+    ();
+}
+
 
 function simulateClickAtCursor() {
     // Get the element at the current mouse coordinates
@@ -92,23 +106,7 @@ function f_delay(time) {
 
 
 
-// function f_sav_board() {
-//     board_sav = [];
-//     board_rev = [];
-//     var x = 0;
-//     for (x=0; x < board.length; x++) {
-//         board_sav.push(board[x]);
-//     }
-    
-// }
 
-// function f_flip_board() {
-//     console.log(board_sav.length);
-//     board = [];
-//     for ( x=(board_sav.length - 1); x >= 0;  x--) {
-//         board.push(board_sav[x])
-//     }
-// }
 
 // end of global funs
 
@@ -136,6 +134,7 @@ class ShogiGame {
                 this.sav_move_list_yel_green_red = [];
 
                 this.currentPlayer = 'black'; // 'black' or 'white'
+                this.view = "black";
                 this.selectedCell = null;
                 this.moveCount = 0;   
                 v_selection_flg=0;
@@ -478,10 +477,19 @@ class ShogiGame {
                 this.currentPlayer = 'white';
                 this.switchPlayer();
                 this.updateStatus();
+                this.process_cmd("1"); 
             }
 
             
-            process_flip(mycmd) {
+            process_flg0(mycmd) {
+                this.flg_flip = 0;
+                this.renderBoard()
+                this.updateStatus()
+                this.process_move_list("1")
+                this.process_cmd("fw8");
+                this.process_cmd("fb8");
+            }
+            process_flipimg(mycmd) {
                 var imgbank;
                 
                 const parm1 = substr1(mycmd,0,2);
@@ -495,8 +503,8 @@ class ShogiGame {
                 var x;
                 for (x=0; x < imgbank.length; x++) {
                     var imgx = imgbank[x];
-                    if (Number(parm2) == 0) imgx.style.transform= "rotate(0deg)";
-                    else imgx.style.transform= "rotate(180deg)";
+                    if (this.view == 'black' ) imgx.style.transform= "rotate(0deg)";
+                    else                       imgx.style.transform= "rotate(180deg)";
                 }
                 
                 
@@ -504,16 +512,45 @@ class ShogiGame {
 
             }
 
+            process_move_list(mycmd) {
+                var clob_of_moves = ""
+                for (var x=0; x < v_move_array.length; x++) {
+                    clob_of_moves = clob_of_moves + v_move_array[x] + "\r"
+                }
+
+                const mvTextarea = document.getElementById("mvInfo");
+                mvTextarea.innerHTML = '';
+                mvTextarea.value = clob_of_moves;
+
+
+            }
+
+            // on the dom object there is a form that accepts commands
+            // f=flip image  fb=flip black fw=flip white
+            //   fb0 , fb8, fw0, fw8
+
+            // m = move ... not yet implemented ... add a piece to the board
+            //     standard moves are done via clicks
+
+            // 1 = show move-list
             process_cmd(mycmd) {
                 const line1 = mycmd;
                 
                 const char1 = substr1(line1,0,1);
                 switch (char1) {
                     case "f":
-                        this.process_flip(mycmd);
+                        this.process_flipimg(mycmd);
                         break;
                     case "m":
-                        break;  
+                        break;
+                    case "1" :
+                        this.process_move_list(mycmd)
+                        break; 
+                    case "2":
+                        this.process_flg0(mycmd);
+                        
+                        break;
+
                 }
 
             }
@@ -522,8 +559,9 @@ class ShogiGame {
                 // Access the value of the 'fname' input field within 'myForm'
                 const elem = document.getElementById("fname");
                 this.cmd = elem.value; 
-                console.log(this.cmd);
+                
                 if (this.cmd.length > 0) { this.process_cmd(this.cmd); }
+                
                 return true;
     
             }
@@ -606,6 +644,7 @@ class ShogiGame {
 
             initializeBoard() {
                 this.renderBoard_once();
+                sync1();
                 // Clear brd
                 //brd = Array(9).fill(null).map(  () => Array(13).fill(null)  );
                 v_movepart = 0;
@@ -704,6 +743,8 @@ class ShogiGame {
                         
                     }
                 }
+                // cmd-1 display the move list
+                this.process_cmd("1");
                 let nop = 1;
             }
 
@@ -812,7 +853,8 @@ class ShogiGame {
                             let img_color = this.pieceColorShort(piece);
                             let str_img_class = "img" + img_color;
                             img.setAttribute('class',str_img_class);
-                            if ( this.flg_flip == 1) img.style.transform= "rotate(180deg)";
+                            if ( this.view == 'white' ) img.style.transform= "rotate(180deg)";
+                            else                        img.style.transform= "rotate(0deg)";
                             cell.appendChild(img)
                         }
 
@@ -831,7 +873,44 @@ class ShogiGame {
                 
             }
 
-            
+    
+            renderBoard_rev_back() {
+                const boardElement = document.getElementById('board');
+                boardElement.innerHTML = '';
+                var ctr = 0;
+                var nID = 0;
+
+                for (let row = 0; row <= 8; row++) {
+                    for (let col = 0; col <= 12; col++) {
+                
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        if ( col == 1 || col == 11 ) cell.className = 'cell2'; 
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        nID = this.gensub(row,col);
+                        cell.dataset.nID = nID;
+                        let divname = "div" + nID.toString().padStart(3, '0');
+                        cell.id = divname; 
+                        ctr--;
+                        
+
+                        cell.addEventListener('click', () => this.onClick_cell( divname ) );
+                        boardElement.appendChild(cell);
+                        var nop = 0;
+                        nop++;
+
+                        
+                        // END OF COL LOOP
+                    }
+                    // end of row loop
+                }
+                // end of method
+                sync1();
+                return;
+            }
+
+
             renderBoard_rev() {
                 const boardElement = document.getElementById('board');
                 boardElement.innerHTML = '';
@@ -864,6 +943,7 @@ class ShogiGame {
                     // end of row loop
                 }
                 // end of method
+                sync1();
                 return; 
 
             }
@@ -905,14 +985,17 @@ class ShogiGame {
 
             }
 
-            renderBoard_norm() {
+            renderBoard_spec() {
                 
                 var divname;
                 let ctr = 0;
-                var nID;
+                var nID, row, col;
                 
-                for (let row = 0; row < 9; row++) {
-                    for (let col = 0; col < 13; col++) {
+//              var deferred = $.deferred();
+//              console.log(deferred);
+
+                for (row = 0; row < 9; row++) {
+                    for (col = 0; col < 13; col++) {
                         nID = this.gensub(row,col);
                         divname = "div" + nID.toString().padStart(3, '0');
                         if ( this.flg_flip == 1 ) {
@@ -924,12 +1007,16 @@ class ShogiGame {
                                         
                         const cellElement = document.getElementById(divname); 
                         var msg = divname + " " + cellElement.innerHTML;
-                        console.log(msg);
-
-                        const piece = board[ this.gensub(row,col) ];
+                        console.log("spec" ,divname);
+                        var idx = Number(substr1(divname,3,3));
+                        var row_o = this.toRowj(idx);
+                        var col_o = this.toColj(idx);
+                         
+                        const piece = board[ this.gensub(row_o,col_o) ];
                         
                         if ( piece === "x" && cellElement.innerHTML.length > 0 ) sync1(); 
-                        if ( piece === "x") { cellElement.innerHTML='';}
+                        // jts debug
+                        if ( piece === "x") { cellElement.innerHTML=''; cellElement.innerHTML = substr1(divname,3,3); }
                         else {
                             cellElement.innerHTML='';
                             let str_img = "images/" + this.ImageXref[ (piece) ];
@@ -938,9 +1025,97 @@ class ShogiGame {
                             let img_color = this.pieceColorShort(piece);
                             let str_img_class = "img" + img_color;
                             img.setAttribute('class',str_img_class);
-                            if ( this.flg_flip == 1) img.style.transform= "rotate(180deg)";
-                            if ( this.flg_flip == 0) img.style.transform= "rotate(0deg)"
-                            cellElement.appendChild(img)
+                            sync1();
+                            if ( this.view == 'white' ) img.style.transform= "rotate(180deg)";
+                            else                        img.style.transform= "rotate(0deg)"
+                            sync1();
+                            cellElement.appendChild(img);
+
+
+                        }
+
+
+                        const asyncWait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+                        (async () => {
+                            await asyncWait(1000)
+                        })();
+
+
+                                                
+                        // END OF COL LOOP
+                    }
+                    // end of row loop
+                }
+                // end of method
+                
+                sync1();
+                this.flg_flip = 0;
+                sync1();
+
+                return; 
+            }
+
+            renderBoard_norm() {
+                
+                var divname;
+                let ctr = 0;
+                var nID, row, col;
+                
+                for (row = 0; row < 9; row++) {
+                    for (col = 0; col < 13; col++) {
+                        nID = this.gensub(row,col);
+                        divname = "div" + nID.toString().padStart(3, '0');
+                        if ( this.flg_flip == 1 ) {
+                            var two_nid = board_xref[ this.gensub(row,col) ]
+                            console.log(two_nid)
+                            divname = "div" + two_nid[1].toString().padStart(3,'0');
+
+                        }
+                    }
+                }
+                sync1();
+                this.flg_flip = 0;
+                sync1();
+
+
+//                var deferred = $.deferred();
+//                console.log(deferred);
+
+                for (row = 0; row < 9; row++) {
+                    for (col = 0; col < 13; col++) {
+                        nID = this.gensub(row,col);
+                        divname = "div" + nID.toString().padStart(3, '0');
+                        if ( this.flg_flip == 1 ) {
+                            var two_nid = board_xref[ this.gensub(row,col) ]
+                            console.log(two_nid)
+                            divname = "div" + two_nid[1].toString().padStart(3,'0');
+
+                        }
+                                        
+                        const cellElement = document.getElementById(divname); 
+                        
+
+                        const piece = board[ this.gensub(row,col) ];
+                        
+                        if ( piece === "x" && cellElement.innerHTML.length > 0 ) sync1(); 
+                        // jts debug
+                        if ( piece === "x") { cellElement.innerHTML=''; cellElement.innerHTML = substr1(divname,3,3); }
+                        else {
+                            cellElement.innerHTML='';
+                            let str_img = "images/" + this.ImageXref[ (piece) ];
+                            let img = document.createElement('img');
+                            img.setAttribute('src',str_img);
+                            let img_color = this.pieceColorShort(piece);
+                            let str_img_class = "img" + img_color;
+                            img.setAttribute('class',str_img_class);
+                            sync1();
+                            if ( this.view == 'white' ) img.style.transform= "rotate(180deg)";
+                            else                        img.style.transform= "rotate(0deg)"
+                            sync1();
+                            cellElement.appendChild(img);
+
+
                         }
 
                        
@@ -1353,7 +1528,7 @@ class ShogiGame {
                 //      pass the nID and run the array
                 //      store in a possiblemoves array
                 let possibleMoves = this.getListOfSquaresYouCanMoveto(nID);
-                console.log('possible moves', possibleMoves)
+                //  onsole.log('possible moves', possibleMoves)
                 
                 
                 // pass1
@@ -1677,6 +1852,8 @@ class ShogiGame {
                 this.switchPlayer();
                 this.updateStatus();
                 this.checkGameEnd();
+                
+                this.process_cmd("1");
                 return;
             }
             
@@ -1702,6 +1879,7 @@ class ShogiGame {
                 this.switchPlayer();
                 this.updateStatus();
                 this.checkGameEnd();
+                this.process_cmd("1");
                 sync1();
             }
             
@@ -1752,18 +1930,46 @@ class ShogiGame {
 
             }
 
-            onBtn_setFlipFlag() {
+            onBtn_Refresh() {
+                console.log("btn refresh hit");
+                this.renderBoard();
+                sync1();
+            }
+            onBtn_Flip() {
                 // zero noflip - 1 is flip
-                this.flg_flip = this.flg_flip === 0 ? 1 : 0 ;
-                // f_sav_board();
-                // f_flip_board();
+                this.flg_flip = 1; 
+                this.view = "white";
                 this.renderBoard_rev();
                 sync1();
-                this.renderBoard();
+                this.renderBoard_spec();
                 sync1();  
                 this.updateStatus();
                 sync1();  
-                this.f_move_array_add("!FLIP");            
+                this.f_move_array_add( ("!FLIP "+ this.flg_flip.toString() ));   
+                this.process_flipimg("fb8");
+                sync1;
+                this.process_flipimg("fw8");         
+                sync1();
+                return;
+            }
+
+            onBtn_FlipBack() {
+                // zero noflip - 1 is flip
+                 
+                this.flg_flip = 0;
+                this.view = "black";
+                this.renderBoard_once()
+                this.renderBoard_spec();
+                sync1();
+                  
+                this.updateStatus();
+                sync1();  
+                this.f_move_array_add("!FLIPBACK "+ this.flg_flip.toString() );
+                this.process_flipimg("fb0");
+                sync1();
+                this.process_flipimg("fw0");  
+                sync1();
+                this.flg_flip = 0;          
                 return;
             }
             
@@ -1811,8 +2017,8 @@ class ShogiGame {
                         msg = "Gote's turn ";
                         gcolor = "white"; 
                     }
-                    if (this.flg_flip == 0 ) { msg = msg + "- Sente's view"}
-                    if (this.flg_flip == 1 ) { msg = msg + "- Gote's view"}
+                    if (this.view == "black" ) { msg = msg + "- Sente's view " + this.flg_flip.toString();}
+                    if (this.view == "white" ) { msg = msg + "- Gote's view "  + this.flg_flip.toString();}
                     
                     let msg1 = this.divinfo + "-" + 
                                this.toRowj(Number(substr1(this.divinfo,3,3))).toString() + "-" + 
@@ -1820,6 +2026,7 @@ class ShogiGame {
                     document.getElementById('status').textContent = msg + "-" + msg1; 
                         
                     this.renderGrayNess(gcolor);
+                    sync1();
                 }
 
                 this.flg_drop = 0;
@@ -1858,7 +2065,7 @@ class ShogiGame {
                 var line1 = cmd;
                 const rxfind = / /;
                 const rxout = line1.split(rxfind); 
-                console.log(rxout[0],rxout[1],rxout[2]);
+                
                 //
                 var toLoc =   Number(substr1(rxout[2], 0,3));
                 
@@ -1869,11 +2076,8 @@ class ShogiGame {
 
             }
             
-            f_undo_flip(cmd) {
-                this.flg_flip = this.flg_flip === 0 ? 1 : 0 ;
-                //f_sav_board();
-                //f_flip_board();
-            }
+            f_undo_flip(cmd) {      this.flg_flip = 0;     this.view = 'black';                        }
+            f_undo_flipback(cmd) {  this.flg_flip = 1;     this.view = 'white'  ;                      }
 
             // msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
             f_undo_promote(cmd) {
@@ -1888,7 +2092,7 @@ class ShogiGame {
                 var line1 = cmd;
                 const rxfind = / /;
                 const rxout = line1.split(rxfind); 
-                console.log(rxout);
+                
                 board[ (  Number(rxout[1]) ) ] = "x"
                 return;
             }
@@ -1932,6 +2136,7 @@ class ShogiGame {
                         if (line1.includes("!CAP "))     { this.f_undo_cap(cmd) ; break;}
                         if (line1.includes("!DROP "))    { this.f_undo_drop(cmd); break;  }
                         if (line1.includes("!FLIP "))    { this.f_undo_flip(cmd); break;}
+                        if (line1.includes("!FLIPBACK ")) { this.f_undo_flipback(cmd); break;}
                         if (line1.includes("!PROMOTE ")) { this.f_undo_promote(cmd); break;}
                         break;  
                 }
@@ -2001,6 +2206,7 @@ class ShogiGame {
                 this.currentPlayer = 'white';
                 this.switchPlayer();          
                 this.updateStatus();
+                this.process_cmd("1");
             }
             
             showHelp() {

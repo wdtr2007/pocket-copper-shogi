@@ -11,8 +11,8 @@
         <div class="game-header">
             <h2 class="game-title">将棋 - Pocket Copper Shogi</h2>
             <h2><form name="form1" action="/submit-page" onsubmit="return game.onSubmit()" method="post">
-                    <label for="fname">cmd</label>
-                    <input type="text" id="fname" name="fname"></input>
+                    <label for="fname">Cmd</label>
+                    <input type="text" id="fname" name="fname">
                     <input type="submit" value="Submit"
 
             </h2>
@@ -28,7 +28,7 @@
         <div class="board-container">
             <!-- table 1 -->
             <div class="captured-pieces">
-                <div class="captured-title">Gote Capt</div>
+                <div class="captured-title">Wh</div>
                 <div id="white-captured"></div>
             </div>
             
@@ -37,14 +37,17 @@
 
             <!-- table 3 = cap pieces section 2 -->
             <div class="captured-pieces">
-                <div class="captured-title">Sente Capt</div>
+                <div class="captured-title">Bk</div>
                 <div id="black-captured"></div>
             </div>
 
             <!-- table 4 = new master move list to debug backs -->
              <div class="Master-Move-List">
                 <div class="Master-Move-List-title">Move List</div>
-                <div id="Move-List"></div>
+                <div id="Move-List" class="Move-List">
+                    <textarea id="mvInfo" class="Move-List" name="mvInfo" rows="30" cols="1">
+                    </textarea>
+                </div>
              </div>
         </div>
         
@@ -53,7 +56,9 @@
         <div class="controls">
             <button onclick="game.newGame()">New Game</button>
             <button onclick="game.showHelp()">Show Piece Guide</button>
-            <button onclick="game.onBtn_setFlipFlag()">Flip</button>
+            <button onclick="game.onBtn_Flip()">Flip</button>
+            <button onclick="game.onBtn_FlipBack()">Flip Back</button>
+            <button onclick="game.onBtn_Refresh()">Refresh</button>
             <button onclick="game.onBtn_goBack()">&lt;</button>
          </div>
     </div>
