@@ -722,8 +722,8 @@ class ShogiGame {
 
 
                 // ask
-                console.log("white col pawn status:", this.wpawn_col_list); 
-                console.log("black col pawn status:", this.bpawn_col_list);
+                 
+                
                 console.log("ctrp is ", ctrp);
                 if ( ctrp !== 117) {
                     if (confirm('possible SFEN ERROR - continue?')) {
@@ -1798,9 +1798,12 @@ class ShogiGame {
                 var end_pt = toNID;
                 var piece = board[start_pt];
                 var piece2 = board[end_pt];
+
+
                 if (piece === 'x') return false;
                 if (piece2 !== 'x') {this.flg_capure = 1;}
                 else {this.flg_capure = 0;}
+                
                 var hit = 0;
                 this.sav_move_list_yel_green_red.forEach( cell_id => {
                     if (cell_id == end_pt) hit=1;
@@ -1815,6 +1818,54 @@ class ShogiGame {
                 return false;
             }
             
+            display_pawn_list(msgp,color,list) {
+                var msg = msgp;
+                for (var x=0; x<13; x++ ) {
+                    msg = msg + list[x].toString();
+                }
+                
+
+                console.log(msg);
+                if (color == "black") msg = "black " + msg; 
+                else                  msg = "white " + msg;
+
+                console.log(msg)
+
+            }
+
+            set_pawn_col(piece, nID ) {
+                const col = this.toColj(nID);
+
+                switch (piece) {
+                    case "P":
+                        this.bpawn_col_list[col] = 1;
+                        this.display_pawn_list("cap set ","black",this.bpawn_col_list);
+                        break;
+                    case "p" :
+                        this.wpawn_col_list[col] = 1;
+                        this.display_pawn_list("cap set ","white",this.wpawn_col_list);
+                        break;
+                }
+
+            }
+        
+            clr_pawn_col(piece, nID ) {
+                const col = this.toColj(nID);
+
+                switch (piece) {
+                    case "P":
+                        this.bpawn_col_list[col] = 0;
+                        this.display_pawn_list("cap clr ","black",this.bpawn_col_list);
+                        break;
+                    case "p" :
+                        this.wpawn_col_list[col] = 0;
+                        this.display_pawn_list("cap clr ","white",this.wpawn_col_list);
+                        break;
+                }
+                
+            }
+
+
             // A move may be logged as 3 events in v_move_array
             // !cap (piece) location where it was
             // !drop (nID) location where is was dropped
@@ -1824,14 +1875,21 @@ class ShogiGame {
                 var temp_piece = board[ toNID ];
                 var to_nID_col = this.toColj(toNID);
                 var from_nID_col = this.toColj(fromNID);
+                var msg = ""; 
+                var to_nID = toNID; 
+                var from_nID = fromNID;
                 
                 
                 // at the move did the target square have a piece on it? if yes ...
                 //  - if promoted then demote
                 //  - change color ... black is uppercase 
+
+                // if you are doing a move and the move is a !CAP, then
+                // you need to check if it is a pawn, if yes, clear the pawn column list
                 
                 if (temp_piece != "x") {
-                    this.f_move_array_add( ("!CAP " + temp_piece + " " + toNID.toString().padStart(3,'0') ) );
+                    this.m_move_array_add( ("!CAP " + temp_piece + " " + toNID.toString().padStart(3,'0') ) );
+                    this.clr_pawn_col(temp_piece, to_nID );
                     temp_piece = temp_piece.replace('+', ''); 
                     switch ( this.pieceColorShort(temp_piece) ) {
                         case ("white") :
@@ -1839,11 +1897,11 @@ class ShogiGame {
                             var empty_drop_spot = this.find_empty_black();
                             if ( empty_drop_spot > 0) { 
                                 board[empty_drop_spot] = temp_piece;
-                                this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
+                                this.m_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') + " " + temp_piece ) ); 
                             } else { 
                                 this.objCap_pieces_sav.black.push(temp_piece);
                             }
-                            if (temp_piece === 'p') this.wpawn_col_list[to_nID_col] = 0; 
+                             
                             break;
                             
                         case ("black") :
@@ -1851,20 +1909,18 @@ class ShogiGame {
                             var empty_drop_spot = this.find_empty_white();
                             if ( empty_drop_spot > 0) { 
                                 board[empty_drop_spot] = temp_piece;
-                                this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
+                                this.m_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') + " " + temp_piece ) ); 
                             } else { 
                                 this.objCap_pieces_sav.white.push(temp_piece);
                                 
                             }
-                            if (temp_piece === 'P') this.bpawn_col_list[to_nID_col] = 0;
+                            
                         break; 
                     }
                     
                 }
                 
-               var msg = ""; 
-               var to_nID = toNID; 
-               var from_nID = fromNID;
+               
                board[ to_nID ] = piece;
                board[ from_nID ] = "x"; 
                 
@@ -1910,14 +1966,17 @@ class ShogiGame {
                 v_move_array.push(move_string);
                 v_selection_flg = 0;
                 this.sav_move_list_yel_green_red = [] ; 
+                this.set_pawn_col(piece,toNID);
                 
                 this.renderBoard();
                 this.renderCapturedPieces();
                 this.switchPlayer();
                 this.updateStatus();
                 this.checkGameEnd();
-                
+                // update the move list display
                 this.process_cmd("1");
+                this.display_pawn_list("black", this.bpawn_col_list);
+                this.display_pawn_list("white", this.wpawn_col_list);
                 return;
             }
             
@@ -1925,10 +1984,16 @@ class ShogiGame {
                 var piece = board[ this.gensub(row,col) ];
 
                 // you must drop on an empty square, that is a value of x
-                if ( piece !== "x") return;
+                if ( piece !== "x") {
+                    this.end_move(row, col,  piece);                    
+                    return;
+                }
 
                 // if you don't have a piece-in-hand you are not doing a drop
-                if (!this.dzPieceInHand) return;
+                if (!this.dzPieceInHand) {
+                    this.end_move(row, col,  "x");
+                    return;
+                }
                 
                 board[ this.gensub(row,col) ] =  this.dzPieceInHand;
                 
@@ -1945,6 +2010,23 @@ class ShogiGame {
                 this.checkGameEnd();
                 this.process_cmd("1");
                 sync1();
+                this.end_move(fromNID , toNID, piece);
+            }
+
+            end_move(fromNID , toNID, piece) {
+                var audio = null;
+
+                switch (true) {
+                    case (piece == '+r' && piece == '+R') :
+                        audio = new Audio('sound/explosion.mp3');
+                        audio.play();
+                        break;
+                    default :
+                        audio = new Audio('sound/1-click.mp3');
+                        audio.play();
+                        break;
+                }
+                
             }
             
             mustPromote(piece, nID) {
@@ -1988,7 +2070,8 @@ class ShogiGame {
                 
             }
 
-            f_move_array_add(str1) {
+            // m_ means method ... trying to keep track of where the functions are via hungarian notation.
+            m_move_array_add(str1) {
                v_move_array.push(str1);
                return;
 
@@ -2009,7 +2092,7 @@ class ShogiGame {
                 sync1();  
                 this.updateStatus();
                 sync1();  
-                if (record == 1) this.f_move_array_add( ("!FLIP "+ this.flg_flip.toString() ));   
+                if (record == 1) this.m_move_array_add( ("!FLIP "+ this.flg_flip.toString() ));   
                 this.process_flipimg("fb8");
                 sync1;
                 this.process_flipimg("fw8");         
@@ -2028,7 +2111,7 @@ class ShogiGame {
                   
                 this.updateStatus();
                 sync1();  
-                if (record == 1) this.f_move_array_add("!FLIPBACK "+ this.flg_flip.toString() );
+                if (record == 1) this.m_move_array_add("!FLIPBACK "+ this.flg_flip.toString() );
                 this.process_flipimg("fb0");
                 sync1();
                 this.process_flipimg("fw0");  
