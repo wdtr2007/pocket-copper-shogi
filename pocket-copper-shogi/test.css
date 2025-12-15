@@ -1,0 +1,8 @@
+body {
+    font-family: 'Georgia', serif;
+    background: linear-gradient(135deg, #8B4513, #DEB887);
+    margin: 0;
+    padding: 20px;
+    min-height: 80vh;
+    
+}

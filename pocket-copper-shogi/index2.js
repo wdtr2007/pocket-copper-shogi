@@ -127,8 +127,9 @@ class ShogiGame {
                 this.flg_flip = 0;
                 this.board_xref = null;
                 this.divinfo = " "
-                this.wpawn_col_list = [0,0,1,1,1,1,1,1,1,1,1,0,0];
-                this.bpawn_col_list = [0,0,1,1,1,1,1,1,1,1,1,0,0];
+                this.wpawn_col_list = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                this.bpawn_col_list = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                this.possible_legal_moves = [];
 
                 // new when you hilight you put the saved highlights here
                 this.sav_move_list_yel_green_red = [];
@@ -477,6 +478,7 @@ class ShogiGame {
                 this.currentPlayer = 'white';
                 this.switchPlayer();
                 this.updateStatus();
+                // populate the move list ---- cluge fix if you can jts
                 this.process_cmd("1"); 
             }
 
@@ -649,9 +651,10 @@ class ShogiGame {
                 //brd = Array(9).fill(null).map(  () => Array(13).fill(null)  );
                 v_movepart = 0;
                 
-                let xp=0; 
-                let yp=0;
-                let zp=0;
+                var row_sfen_ctr=0; 
+                var col_sfen_ctr=0;
+                var sfen_idx=0;
+                var nop=0;
                 let ctrp=0;
                 this.flg_drop = 0;
                 this.generate_board_xref();
@@ -659,8 +662,8 @@ class ShogiGame {
                 //ctrp is the number of squares you populate with a sfen
                 // it should always be 116 or you have an invalid sfen key
 
-                for (zp=0; zp < SFEN.length; zp++) {
-                    var char1 = (SFEN.substring(zp,(zp+1)));
+                for (sfen_idx=0; sfen_idx < SFEN.length; sfen_idx++) {
+                    var char1 = (SFEN.substring(sfen_idx,(sfen_idx+1)));
 
                     // hack ... Fen was designed as a 1 char
                     //      promoted pieces are +{fen} so
@@ -668,53 +671,66 @@ class ShogiGame {
 
                     // Example: if sfen contains a +R it is a promoted piece of type Dragon
                     // char1 will now contain 2 chars with a plus_piece fen code
-                    if (char1 === "+") {
-                        zp++;
-                        char1 = char1 + (SFEN.substring(zp,(zp+1)));
-                        board.push(char1) ;
-                        yp++;
-                        ctrp++;
-                        continue;  
+
+                    switch (true) {
+                        //special case of + like +R char1 will hold 2-chars
+                        // this is a promoted peice    
+                        case (char1 === "+") :
+                            sfen_idx++;
+                            char1 = char1 + (SFEN.substring(sfen_idx,(sfen_idx+1)));
+                            board.push(char1) ;
+                            col_sfen_ctr++;
+                            ctrp++;
+                            break; 
+                        case (char1 > "0" && char1 <= "9" ) :
+                            for (i = 1; i <= Number(char1); i++) {
+                            board.push( "x");
+                            col_sfen_ctr++;
+                            ctrp++
+                            }
+                            break;
+                        case ( char1 >= "a" &&  char1 <= "z"   ) :
+                            board.push(char1) ;
+                            if (char1 == 'k') this.WhiteKing = ctrp;
+                            if (char1 == 'p') {
+                                var idx = this.toColj(ctrp);
+                                this.wpawn_col_list[idx] = 1;
+                            }
+                            col_sfen_ctr++;
+                            ctrp++;
+                            break;
+                        case (char1 == "/") :
+                            row_sfen_ctr++; 
+                            col_sfen_ctr=0;
+                            break;  
+                        // everything is uppercase now or there is a sfen err
+                        case ( char1 >= "A" &&  char1 <= "Z"   ) : 
+                            board.push(char1);
+                            if (char1 == 'K') this.BlackKing = ctrp;
+                            if (char1 == 'P') {
+                                var idx = this.toColj(ctrp);
+                                this.bpawn_col_list[idx] = 1;
+                            }
+                            col_sfen_ctr++;
+                            ctrp++;
+                            break;
+
                     }
                     
-                    
-                    if (char1 > "0" && char1 <= "9" ) {
-                        for (i = 1; i <= Number(char1); i++) {
-                           board.push( "x");
-                           yp++;
-                           ctrp++
-                        }
-                        continue;
-                    }
-
-                    if ( char1 >= "a" &&  char1 <= "z"   ) {
-                        board.push(char1) ;
-                        if (char1 == 'k') this.WhiteKing = ctrp;
-                        yp++;
-                        ctrp++;
-                        continue;
-                    }
-
-                    if ( char1 == "/") {
-                        xp++; 
-                        yp=0;
-                        continue;
-                    } 
-
-                    // everything is uppercase now
-                    if ( char1 >= "A" &&  char1 <= "Z"   ) {
-                        board.push(char1);
-                        if (char1 == 'K') this.BlackKing = ctrp;
-                        yp++;
-                        ctrp++;
-                        continue;
-                    }
-
-                     
-                // end of for zp
+                // end of for sfen_idx
                 }
 
-                 console.log("ctrp is ", ctrp);
+
+                // ask
+                console.log("white col pawn status:", this.wpawn_col_list); 
+                console.log("black col pawn status:", this.bpawn_col_list);
+                console.log("ctrp is ", ctrp);
+                if ( ctrp !== 117) {
+                    if (confirm('possible SFEN ERROR - continue?')) {
+                        nop = 1 ;
+                        
+                    }
+                }
 
                 
                 // Reset game state
@@ -725,7 +741,7 @@ class ShogiGame {
                 this.sav_move_list_yel_green_red = [];
                 this.objCap_pieces_sav = { black: [], white: [] };
                 this.gameOver = false;
-                let nop = 1;
+                
             }
             
             // jts see if you want to clean this up
@@ -1230,7 +1246,8 @@ class ShogiGame {
             make_green(nID) {
                 //this.onClick_CapturePieceWhite(gp, 'white'));
                 //this.onClick_CapturePieceBlack(gp, 'black'));
-                this.highlightDropZones();
+                var piece_type = board[nID]
+                this.highlightDropZones(piece_type);
                 return;
             }
 
@@ -1335,6 +1352,7 @@ class ShogiGame {
 
             onClick_cell_pass1_drop_type(nID,color) {
 
+                // dz is dropzone ... you just picked up a piece from the drop zone
                 this.dzPieceInHand = board[ nID ];
                 const piece = this.dzPieceInHand;
 
@@ -1424,14 +1442,14 @@ class ShogiGame {
                 if ( (player !== this.currentPlayer && player != "none" ) || this.gameOver) return;
                 
                 this.dzPieceInHand = pieceType;
-                this.highlightDropZones();
+                this.highlightDropZones(pieceType);
             }
 
             onClick_CapturePieceWhite(pieceType, player) {
                 if ( (player !== this.currentPlayer && player != "none" ) || this.gameOver) return;
                 
                 this.dzPieceInHand = pieceType;
-                this.highlightDropZones();
+                this.highlightDropZones(pieceType);
             }
 
 
@@ -1570,16 +1588,45 @@ class ShogiGame {
             
             // needs work
             // I need to add/fix pawn drop logic
-            highlightDropZones() {
-                this.clearHighlights();
+            highlightDropZones(src_piece) {
                 
+                
+                this.clearHighlights();
+
+                var ok_to_drop = 0;
+                
+                // jts this is not right 
+                //  I think I need to pass a piece to highlight
+                // It should look for drop squares based on piece/color/
+                // do we need to use nid or is row,col good enough?
+                // we need a unit test to fix this code
+
                 for (let row = 0; row < 9; row++) {
                     for (let col = 2; col < 11; col++) {
                         var looksquare = board[ this.gensub(row,col) ]
+                        ok_to_drop = 1;
+
+                        switch (true) {
+                            case ( src_piece == 'P') :
+                                if ( this.bpawn_col_list[ col ] == 1 ) ok_to_drop = 0;
+                                break;
+                            case ( src_piece == 'p') :
+                                if ( this.wpawn_col_list[ col ] == 1 ) ok_to_drop = 0;
+                                break;
+                            case ( src_piece == 'L') :
+                                if ( row == 0 ) ok_to_drop = 0; break;
+                            case ( src_piece == 'l') :  
+                                if ( row == 8 ) ok_to_drop = 0; break;
+                            case ( src_piece == 'N') :
+                                if ( row <  2 ) ok_to_drop = 0; break;
+                            case ( src_piece == 'n') :                                
+                                if ( row > 10 ) ok_to_drop = 0; break;
+                        }
+
                         var iamempty = 0;
-                          // null of this board=empty good to drop
+                          // null or x on this board means empty -- good to drop if the piece is right
                         if ( this.pieceColorShort(looksquare) === "none") { iamempty = 1;}
-                        if ( iamempty == 1 ) {
+                        if ( iamempty == 1 && ok_to_drop == 1 ) {
                             const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                             cell.classList.add('valid-move');
                             this.sav_move_list_yel_green_red.push( (this.gensub(row,col)) )
@@ -1775,6 +1822,8 @@ class ShogiGame {
             make_move(fromNID , toNID) {
                 var piece = board[ fromNID ];
                 var temp_piece = board[ toNID ];
+                var to_nID_col = this.toColj(toNID);
+                var from_nID_col = this.toColj(fromNID);
                 
                 
                 // at the move did the target square have a piece on it? if yes ...
@@ -1784,28 +1833,33 @@ class ShogiGame {
                 if (temp_piece != "x") {
                     this.f_move_array_add( ("!CAP " + temp_piece + " " + toNID.toString().padStart(3,'0') ) );
                     temp_piece = temp_piece.replace('+', ''); 
-                    if (this.pieceColorShort(temp_piece)  == "white") { 
-                        temp_piece = temp_piece.toUpperCase();
-                        var empty_drop_spot = this.find_empty_black();
-                        if ( empty_drop_spot > 0) { 
-                            board[empty_drop_spot] = temp_piece;
-                            this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
-                        } else { 
-                            this.objCap_pieces_sav.black.push(temp_piece);
-                        }
-                    } else {  
-                        temp_piece = temp_piece.toLowerCase();
-                        var empty_drop_spot = this.find_empty_white();
-                        if ( empty_drop_spot > 0) { 
-                            board[empty_drop_spot] = temp_piece;
-                            this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
-                        } else { 
-                            this.objCap_pieces_sav.white.push(temp_piece);
-                             
-                        }
-
-                        
+                    switch ( this.pieceColorShort(temp_piece) ) {
+                        case ("white") :
+                            temp_piece = temp_piece.toUpperCase();
+                            var empty_drop_spot = this.find_empty_black();
+                            if ( empty_drop_spot > 0) { 
+                                board[empty_drop_spot] = temp_piece;
+                                this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
+                            } else { 
+                                this.objCap_pieces_sav.black.push(temp_piece);
+                            }
+                            if (temp_piece === 'p') this.wpawn_col_list[to_nID_col] = 0; 
+                            break;
+                            
+                        case ("black") :
+                            temp_piece = temp_piece.toLowerCase();
+                            var empty_drop_spot = this.find_empty_white();
+                            if ( empty_drop_spot > 0) { 
+                                board[empty_drop_spot] = temp_piece;
+                                this.f_move_array_add(  ("!DROP " + empty_drop_spot.toString().padStart(3,'0') ) ); 
+                            } else { 
+                                this.objCap_pieces_sav.white.push(temp_piece);
+                                
+                            }
+                            if (temp_piece === 'P') this.bpawn_col_list[to_nID_col] = 0;
+                        break; 
                     }
+                    
                 }
                 
                var msg = ""; 
@@ -1839,6 +1893,16 @@ class ShogiGame {
                 }
                 
                 this.moveCount++;
+
+                // record all pawns and what col they are in
+                // we probably need to reverse the wpawn-col array and bpawn-col arrar on a flip jts
+                if (piece == 'P' || piece == 'p') {
+                    if (temp_piece === 'p') this.wpawn_col_list[to_nID_col] = 1; 
+                    if (temp_piece === 'P') this.bpawn_col_list[to_nID_col] = 1;
+                }
+
+                // end of pawn col section
+
                 var move_xxx = this.moveCount.toString().padStart(3,'0');
                 let move_string = "m" + move_xxx + " " + piece + " " + 
                     fromNID.toString().padStart(3,'0') + "-" +
@@ -1935,7 +1999,7 @@ class ShogiGame {
                 this.renderBoard();
                 sync1();
             }
-            onBtn_Flip() {
+            onBtn_Flip(record) {
                 // zero noflip - 1 is flip
                 this.flg_flip = 1; 
                 this.view = "white";
@@ -1945,7 +2009,7 @@ class ShogiGame {
                 sync1();  
                 this.updateStatus();
                 sync1();  
-                this.f_move_array_add( ("!FLIP "+ this.flg_flip.toString() ));   
+                if (record == 1) this.f_move_array_add( ("!FLIP "+ this.flg_flip.toString() ));   
                 this.process_flipimg("fb8");
                 sync1;
                 this.process_flipimg("fw8");         
@@ -1953,7 +2017,7 @@ class ShogiGame {
                 return;
             }
 
-            onBtn_FlipBack() {
+            onBtn_FlipBack(record) {
                 // zero noflip - 1 is flip
                  
                 this.flg_flip = 0;
@@ -1964,7 +2028,7 @@ class ShogiGame {
                   
                 this.updateStatus();
                 sync1();  
-                this.f_move_array_add("!FLIPBACK "+ this.flg_flip.toString() );
+                if (record == 1) this.f_move_array_add("!FLIPBACK "+ this.flg_flip.toString() );
                 this.process_flipimg("fb0");
                 sync1();
                 this.process_flipimg("fw0");  
@@ -2076,9 +2140,7 @@ class ShogiGame {
 
             }
             
-            f_undo_flip(cmd) {      this.flg_flip = 0;     this.view = 'black';                        }
-            f_undo_flipback(cmd) {  this.flg_flip = 1;     this.view = 'white'  ;                      }
-
+           
             // msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
             f_undo_promote(cmd) {
                 var line1 = cmd;
@@ -2135,13 +2197,16 @@ class ShogiGame {
                     case "!":
                         if (line1.includes("!CAP "))     { this.f_undo_cap(cmd) ; break;}
                         if (line1.includes("!DROP "))    { this.f_undo_drop(cmd); break;  }
-                        if (line1.includes("!FLIP "))    { this.f_undo_flip(cmd); break;}
-                        if (line1.includes("!FLIPBACK ")) { this.f_undo_flipback(cmd); break;}
+                        if (line1.includes("!FLIP "))    { this.onBtn_FlipBack(0); break;}
+                        if (line1.includes("!FLIPBACK ")) { this.onBtn_Flip(0); break;}
                         if (line1.includes("!PROMOTE ")) { this.f_undo_promote(cmd); break;}
                         break;  
                 }
                 return;
             } 
+
+
+     
 
             onBtn_goBack() {
                 // you can not do a back move until step #3
