@@ -1609,9 +1609,11 @@ class ShogiGame {
                         switch (true) {
                             case ( src_piece == 'P') :
                                 if ( this.bpawn_col_list[ col ] == 1 ) ok_to_drop = 0;
+                                if ( row == 0 ) ok_to_drop = 0;
                                 break;
                             case ( src_piece == 'p') :
                                 if ( this.wpawn_col_list[ col ] == 1 ) ok_to_drop = 0;
+                                if (row == 11 ) ok_to_drop = 0;
                                 break;
                             case ( src_piece == 'L') :
                                 if ( row == 0 ) ok_to_drop = 0; break;
@@ -1818,14 +1820,18 @@ class ShogiGame {
                 return false;
             }
             
-            display_pawn_list(msgp,color,list) {
+            display_pawn_list(msgp,color ) {
                 var msg = msgp;
+                var list2;
+
+                if (color == "black") list2 = this.bpawn_col_list;
+                else list2 = this.wpawn_col_list;
+
                 for (var x=0; x<13; x++ ) {
-                    msg = msg + list[x].toString();
+                    msg = msg + list2[x].toString();
                 }
                 
 
-                console.log(msg);
                 if (color == "black") msg = "black " + msg; 
                 else                  msg = "white " + msg;
 
@@ -1839,11 +1845,11 @@ class ShogiGame {
                 switch (piece) {
                     case "P":
                         this.bpawn_col_list[col] = 1;
-                        this.display_pawn_list("cap set ","black",this.bpawn_col_list);
+                        this.display_pawn_list("bk cap set ","black" );
                         break;
                     case "p" :
                         this.wpawn_col_list[col] = 1;
-                        this.display_pawn_list("cap set ","white",this.wpawn_col_list);
+                        this.display_pawn_list("wi cap set ","white" );
                         break;
                 }
 
@@ -1855,11 +1861,11 @@ class ShogiGame {
                 switch (piece) {
                     case "P":
                         this.bpawn_col_list[col] = 0;
-                        this.display_pawn_list("cap clr ","black",this.bpawn_col_list);
+                        this.display_pawn_list("bk cap clr ","black" );
                         break;
                     case "p" :
                         this.wpawn_col_list[col] = 0;
-                        this.display_pawn_list("cap clr ","white",this.wpawn_col_list);
+                        this.display_pawn_list("wi cap clr ","white" );
                         break;
                 }
                 
@@ -1878,6 +1884,7 @@ class ShogiGame {
                 var msg = ""; 
                 var to_nID = toNID; 
                 var from_nID = fromNID;
+                var move_type = "-";
                 
                 
                 // at the move did the target square have a piece on it? if yes ...
@@ -1958,10 +1965,17 @@ class ShogiGame {
                 }
 
                 // end of pawn col section
+                var from_col = this.toColj( fromNID.toString().padStart(3,'0') );
+
+                if ( from_col == 0 || from_col == 12 ) {
+                    move_type = "*" ;
+                } else {
+                    move_type = "-";
+                }
 
                 var move_xxx = this.moveCount.toString().padStart(3,'0');
                 let move_string = "m" + move_xxx + " " + piece + " " + 
-                    fromNID.toString().padStart(3,'0') + "-" +
+                    fromNID.toString().padStart(3,'0') + move_type +
                     toNID.toString().padStart(3,'0') ;
                 v_move_array.push(move_string);
                 v_selection_flg = 0;
