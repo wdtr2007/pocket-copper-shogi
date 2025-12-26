@@ -8,133 +8,6 @@
 
 
 
-// global vars 
-
-var v_movepart = 0;
-var v_boardsize = 13 * 9;
-var x,y,z,i = 0;
-var mv_bucket = [[,]];
-var v_selection_flg = 0;
-var v_move_array = [];
-var v_move_action = [];
-var v_move_ctr_for_pocket = 0;
-
-var SFEN = "2lnsgkgsnl2/c2r5b3/2ppppppppp2/292/292/292/2PPPPPPPPP2/3B5R3/2LNSGKGSNL1C";
-var board = []; 
-var board_sav = [];
-var board_xref = [];
-var board_element = [];
-
-// end of global vars
-
-
-// global functions - always sync
-
-
-
-
-var mousePosition = { xpos: 0, ypos: 0 };
-
-document.addEventListener('mousemove', (e) => {
-      mousePosition.xpos = e.clientX;
-      mousePosition.ypos = e.clientY;
-    }
-);
-
-document.addEventListener('keydown', (e) => {
-    // Check for the desired key (e.g., 'Enter' key)
-    if (e.key === ' ') {
-        // Prevent default browser behavior for the keypress
-        e.preventDefault(); 
-        simulateClickAtCursor();
-    }
-});
-
-
-function simulateClickAtCursor() {
-    // Get the element at the current mouse coordinates
-    const elementToClick = document.elementFromPoint(mousePosition.xpos, mousePosition.ypos);
-
-    if (elementToClick) {
-        // Create a new MouseEvent
-        const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            clientx: mousePosition.xpos,
-            clientY: mousePosition.ypos
-        });
-
-        // Dispatch the click event on the element
-        elementToClick.dispatchEvent(clickEvent);
-    }
-}
-
-async function play_sound(file1) {
-     const audio = new Audio(file1);
-     await audio.play();
-}
-
-
-
-function right(str, num) {  return str.slice(-num); }
-function isLowerCase(str) { return str === str.toLowerCase(); }
-
-async function sync1() {
-    await waitForDOMLoaded();
-} 
-
-function substr1(str1,start,len) {
-    return str1.substring(start,(start+len));
-}
-
-setTimeout(function() { var nop=1;}, 1000);  // 1000 milliseconds = 1 second
-
-function f_delay(time) {
-    return new Promise(resolve => setTimeout(resolve,time));
-}
-
-
-
-/**
- * Creates a promise that resolves when the DOM is fully loaded.
- * @returns {Promise<void>}
- */
-function waitForDOMLoaded() {
-    return new Promise((resolve) => {
-        if (document.readyState === 'loading') {
-            // DOM is still loading, wait for the event
-            document.addEventListener('DOMContentLoaded', () => {
-                resolve();
-            }, { once: true });
-        } else {
-            // DOM is already loaded
-            resolve();
-        }
-    });
-}
-
-// An async function to utilize the await keyword
-async function initializePage() {
-    console.log("Waiting for the DOM to load...");
-    await waitForDOMLoaded();
-    console.log("DOM fully loaded and parsed. Initializing application...");
-
-    // Now you can safely interact with the DOM elements
-    const element = document.getElementById('myElement');
-    if (element) {
-        element.textContent = 'Content added after DOM load';
-    }
-}
-
-// Call the async function
-initializePage();
-
-
-
-
-
-
-// end of global funs
 
 
 // begin class
@@ -150,12 +23,15 @@ class ShogiGame {
                 this.flg_drop = 0;
                 this.WhiteKing = 0;
                 this.BlackKing = 0;
+                this.flg_whi_check = 0;
+                this.flg_blk_check = 0;
                 this.flg_flip = 0;
                 this.board_xref = null;
                 this.divinfo = " "
                 this.wpawn_col_list = [0,0,0,0,0,0,0,0,0,0,0,0,0];
                 this.bpawn_col_list = [0,0,0,0,0,0,0,0,0,0,0,0,0];
                 this.possible_legal_moves = [];
+                this.check_msg = "";
 
                 // new when you hilight you put the saved highlights here
                 this.sav_move_list_yel_green_red = [];
@@ -164,321 +40,24 @@ class ShogiGame {
                 this.view = "black";
                 this.selectedCell = null;
                 this.moveCount = 0;   
-                v_selection_flg=0;
 
+                this.have_blackKing = true;
+                this.have_whiteKing = true;
+                
 
-                this.ImageXref = {                              
-                    "+B" :    "bH.png",                      
-                    "+b" :    "wH.png",                      
-                    "+C" :    "bO.png",                      
-                    "+c" :    "wO.png",                      
-                    "+G" :    "bE.png",                      
-                    "+g" :    "wE.png",                      
-                    "+L" :    "bM.png",                      
-                    "+m" :    "wM.png",                      
-                    "+N" :   "bpN.png",     
-                    "+n" :   "wpN.png",     
-                    "+P" :    "bT.png",
-                    "+p" :    "wT.png",
-                    "+R" :    "bD.png",                      
-                    "+r" :    "wD.png",                      
-                    "+S" :  "bps.png" ,                    
-                    "+s" :   "wps.png",                    
-                    "B" :    "bB.png",                      
-                    "b" :    "wB.png",                      
-                    "C" :    "bC.png",                      
-                    "c" :    "wC.png",                      
-                    "G" :    "bG.png",                      
-                    "g" :    "wG.png",                      
-                    "K" :   "bK.png",                       
-                    "k" :   "wK.png",                       
-                    "L" :    "bL.png",                      
-                    "l" :    "wL.png",                      
-                    "N" :    "bN.png",
-                    "n" :    "wN.png",
-                    "P" :    "bP.png",                      
-                    "p" :    "wP.png",                      
-                    "R" :    "bR.png",                      
-                    "r" :    "wR.png",                      
-                    "S" :    "bS.png",  
-                    "s" :    "wS.png"
-                }	
 
 
                 
             
-                // array info below
-                // 1 = jumper, 2 = slider, num of elements in array
-                // 3 = merge slider moves and jumper moves
-                //    example to move 1 square north you subtract 13
-                //    from the nID.
-        
-                this.movesYouCanDo = {
-                    "K" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    "G" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-                    "S" :  [ 1,5,       -12,-13,-14, 12,   14  ],
-                    "C" :  [ 1,4,       -12,-13,-14,    13  ],
-                    "N" :  [ 1,2, -27 , -25 ],
-                    "L" :  [ 2,1, 1],
-                    "L1":  [ 1, 8, -13,-26,-39,-52,-65,-78,-91,-104] ,
-                    "B" :  [ 2,1,4],
-                    "B1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "B2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "B3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "B4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-
-                    "R" :  [ 2,1,4],
-                    "R1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "R2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],
-                    "R3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "R4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-
-                    "P":   [ 1,1,-13 ],
-                    "+G" :  [ 1,7,-1, 1, -12,-13,-14, 12,   14  ],
-                    "+S" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-                    "+C" :  [ 1,5,       -12,-13,-14, 12,   14  ],
-                    "+N" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-
-                    //  bk side mover
-                    "+L" :  [ 2, 1, 3],
-                    "+L1":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+L2":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+L3":  [ 3, 2, -13,13 ],
-
-                    "+B" :  [ 2,1,5],
-                    "+B1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "+B2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "+B3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "+B4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-                    "+B5":  [ 3,8,  -1,  1,-12,-13,-14, 12,13,14  ],
-
-                    "+R" :  [ 2,1,5],
-                    "+R1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "+R2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],
-                    "+R3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+R4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+R5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    "+P":   [ 1,6,-1, 1, -12,-13,-14,    13     ],
-
-                    "k" :  [ 1,8,-1, 1, 12,13,14, -12,-13,-14  ],
-                    "g" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "s" :  [ 1,5,        12, 13, 14,-12,  -14  ],
-                    "c" :  [ 1,4,        12, 13, 14,   -13  ],
-                    "n" :  [ 1,2,  27 ,  25 ],
-
-                    "l" :  [ 2,1, 1],
-                    "l1":  [ 1, 8, 13,26,39,52,65,78,91,104] ,
-
-
-                    "b" :  [ 2,1,4],
-                    "b1":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112] ,
-                    "b2":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96],
-                    "b3":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112],
-                    "b4":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96 ], 
-
-                    "r" :  [ 2,1,4],
-                    "r1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "r2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],                    
-                    "r3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "r4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "p":   [ 1,1, 13 ],
-
-                    // elephant
-                    "+g" :  [ 1,7,-1, 1,  12, 13, 14,-12,  -14  ],
-                    "+s" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "+c" :  [ 1,5,        12, 13, 14,-12,  -14  ],
-                    "+n" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "+p":   [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-
-                    // side mover
-                    "+l" :  [ 2,1, 3],
-                    "+l1":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+l2":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+l3":  [ 3, 2, -13,13 ],
-
-                    "+b" :  [ 2,1,5],
-                    "+b1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "+b2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "+b3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "+b4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-                    "+b5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    
-                    "+r" :  [ 2,1,5],
-                    "+r1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "+r2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],                    
-                    "+r3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+r4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+r5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ]
-
-                }
-
-                
-
-                this.movesYouCanDo_flip = {
-                    "k" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    "g" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-                    "s" :  [ 1,5,       -12,-13,-14, 12,   14  ],
-                    "c" :  [ 1,4,       -12,-13,-14,    13  ],
-                    "n" :  [ 1,2, -27 , -25 ],
-                    "l" :  [ 2,1, 1],
-                    "l1":  [ 1, 8, -13,-26,-39,-52,-65,-78,-91,-104] ,
-                    "b" :  [ 2,1,4],
-                    "b1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "b2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "b3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "b4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-
-                    "r" :  [ 2,1,4],
-                    "r1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "r2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],
-                    "r3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "r4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-
-                    "p":   [ 1,1,-13 ],
-                    "+g" :  [ 1,7,-1, 1, -12,-13,-14, 12,   14  ],
-                    "+s" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-                    "+c" :  [ 1,5,       -12,-13,-14, 12,   14  ],
-                    "+n" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
-
-                    //  bk side mover
-                    "+l" :  [ 2, 1, 3],
-                    "+l1":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+l2":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+l3":  [ 3, 2, -13,13 ],
-
-                    "+b" :  [ 2,1,5],
-                    "+b1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "+b2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "+b3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "+b4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-                    "+b5":  [ 3,8,  -1,  1,-12,-13,-14, 12,13,14  ],
-
-                    "+r" :  [ 2,1,5],
-                    "+r1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "+r2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],
-                    "+r3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+r4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+r5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    "+p":   [ 1,6,-1, 1, -12,-13,-14,    13     ],
-
-                    "K" :  [ 1,8,-1, 1, 12,13,14, -12,-13,-14  ],
-                    "G" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "S" :  [ 1,5,        12, 13, 14,-12,  -14  ],
-                    "C" :  [ 1,4,        12, 13, 14,   -13  ],
-                    "N" :  [ 1,2,  27 ,  25 ],
-
-                    "L" :  [ 2,1, 1],
-                    "L1":  [ 1, 8, 13,26,39,52,65,78,91,104] ,
-
-
-                    "B" :  [ 2,1,4],
-                    "B1":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112] ,
-                    "B2":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96],
-                    "B3":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112],
-                    "B4":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96 ], 
-
-                    "R" :  [ 2,1,4],
-                    "R1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "R2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],                    
-                    "R3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "R4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "P":   [ 1,1, 13 ],
-
-                    // elephant
-                    "+G" :  [ 1,7,-1, 1,  12, 13, 14,-12,  -14  ],
-                    "+S" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "+C" :  [ 1,5,        12, 13, 14,-12,  -14  ],
-                    "+N" :  [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-                    "+P":   [ 1,6,-1, 1,  12, 13, 14,   -13     ],
-
-                    // side mover
-                    "+L" :  [ 2,1, 3],
-                    "+L1":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+L2":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+L3":  [ 3, 2, -13,13 ],
-
-                    "+B" :  [ 2,1,5],
-                    "+B1":  [ 1,8, -14,-28,-42,-56,-70,-84,-98,-112] ,
-                    "+B2":  [ 1,8, -12,-24,-36,-48,-60,-72,-84,-96],
-                    "+B3":  [ 1,8,  14, 28, 42, 56, 70, 84, 98, 112],
-                    "+B4":  [ 1,8,  12, 24, 36, 48, 60, 72, 84, 96 ], 
-                    "+B5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ],
-                    
-                    "+R" :  [ 2,1,5],
-                    "+R1":  [ 1,8,13,26,39,52,65,78,91,104],
-                    "+R2":  [ 1,8,-13,-26,-39,-52,-65,-78,-91,-104],                    
-                    "+R3":  [ 1,8, -1,-2,-3,-4,-5,-6,-7,-8],
-                    "+R4":  [ 1,8,  1, 2, 3, 4, 5, 6, 7, 8],
-                    "+R5":  [ 3,8,-1, 1, -12,-13,-14, 12,13,14  ]
-
-                }
 
                 
                 this.selectedCell = null;
                 this.moveCount = 0;   
-                v_selection_flg=0;
+                
                   
                 this.objCap_pieces_sav = { black: [], white: [] };
                 this.gameOver = false;
                 
-                // Piece symbols
-                this.pieceskan = {
-                    // Sente pieces
-                    'K': '王', // King
-                    'G': '金', // Gold
-                    'S': '銀', // Silver
-                    'N': '桂', // Knight
-                    'L': '香', // Lance
-                    'B': '角', // Bishop
-                    'R': '飛', // Rook
-                    'P': '歩', // Pawn
-                    // Promoted pieces
-                    '+S': '成', // Promoted Silver
-                    '+N': '成', // Promoted Knight
-                    '+L': '成', // Promoted Lance
-                    '+B': '馬', // Promoted Bishop (Dragon Horse)
-                    '+R': '竜', // Promoted Rook (Dragon King)
-                    '+P': 'と'  // Promoted Pawn (Tokin)
-                };
-				
-                this.pieces = {
-                    // Sente pieces
-                    'K': 'K', // King
-                    'G': 'G', // Gold
-                    'S': 'S', // Silver
-                    'N': 'N', // Knight
-                    'L': 'L', // Lance
-                    'B': 'B', // Bishop
-                    'R': 'R', // Rook
-                    'P': 'P', // Pawn
-                    'C': 'C',
-                    // Promoted pieces
-                    '+S': '+S', // Promoted Silver
-                    '+N': '+N', // Promoted Knight
-                    '+L': '+L', // Promoted Lance
-                    '+B': '+B', // Promoted Bishop (Dragon Horse)
-                    '+R': '+R', // Promoted Rook (Dragon King)
-                    '+P': '+P',  // Promoted Pawn (Tokin)
-                    '+C': '+C',  
-
-                    'k': 'k', // King
-                    'g': 'g', // Gold
-                    's': 's', // Silver
-                    'n': 'n', // Knight
-                    'l': 'l', // Lance
-                    'b': 'b', // Bishop
-                    'r': 'r', // Rook
-                    'p': 'p', // Pawn
-                    'c': 'c', 
-                    // Promoted pieces
-                    '+s': '+s', // Promoted Silver
-                    '+n': '+n', // Promoted Knight
-                    '+l': '+l', // Promoted Lance
-                    '+b': '+b', // Promoted Bishop (Dragon Horse)
-                    '+r': '+r', // Promoted Rook (Dragon King)
-                    '+p': '+p',  // Promoted Pawn (Tokin)
-                    '+c': '+c' 
-                };
 
                 
                 // notice we did not switch player
@@ -506,6 +85,7 @@ class ShogiGame {
                 this.updateStatus();
                 // populate the move list ---- cluge fix if you can jts
                 this.process_cmd("1"); 
+                this.m_generate_move_list("black");
             }
 
             // the main click cell function.
@@ -664,11 +244,11 @@ class ShogiGame {
             // can make ... this will be used to determine if a king is in check
             // later on ... not used right now
 
-            // mv_bucket contains all the pieces that are friendly that are on board
+            // f riend_piece_bucket contains all the pieces that are friendly that are on board
             // this excludes the drop zones
 
-            generate_move_list(player) {
-                mv_bucket = [];
+            m_generate_move_list(player) {
+                friend_piece_bucket = ([]);
                 for ( let k=0; k < v_boardsize; k++) {
                     let r = this.toRowj(k);
                     let c = this.toColj(k);
@@ -677,30 +257,33 @@ class ShogiGame {
                         // const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                         const movechar = board[ this.gensub(r,c) ];
                         if ( this.pieceColorShort(movechar) == player) {
-                            mv_bucket.push( [r,c] ); 
+                            friend_piece_bucket.push( [k,movechar,r,c] ); 
                         }
 
 
                 }
 
-                //if (mv_bucket.length > 0 ) {
+                //if (f riend_piece_bucket.length > 0 ) {
                 //    if (this. urrentPlayer = "white") {
                 //        let PocketPiece =board[0][0]
                 //        if (PocketPiece && PocketPiece == "white" ) { let nop = 1}
-                //        else { mv_bucket.push[0,0]; }
+                //        else { f riend_piece_bucket.push[0,0]; }
                 //    }
                 //    if (this. urrentPlayer = "black") {
                 //        let PocketPiece =board[0][0]
                 //        if (PocketPiece && PocketPiece == "white" ) { let nop = 1}
-                //        else { mv_bucket.push[8,12]; }
+                //        else { f riend_piece_bucket.push[8,12]; }
                 //    }
                 // }
-                return mv_bucket; 
+
+                // return friend_piece_bucket;
+                return friend_piece_bucket; 
             }
             
             // this section is run when the "new game" button is hit
 
             initializeBoard() {
+                
                 this.renderBoard_once();
                 sync1();
                 // Clear brd
@@ -820,7 +403,7 @@ class ShogiGame {
             }
 
             gensub(row,col) {
-                x = row * 13 + col;
+                const x = row * 13 + col;
                 return x;
             }
 
@@ -920,7 +503,7 @@ class ShogiGame {
                         
                         
                         if ( piece !== "x") {
-                            let str_img = "images/" + this.ImageXref[ (piece) ];
+                            let str_img = "images/" + ImageXref[ (piece) ];
                             let img = document.createElement('img');
                             img.setAttribute('src',str_img);
                             let img_color = this.pieceColorShort(piece);
@@ -1064,23 +647,18 @@ class ShogiGame {
                 let ctr = 0;
                 var nID, row, col;
                 
-//              var deferred = $.deferred();
-//              console.log(deferred);
-
                 for (row = 0; row < 9; row++) {
                     for (col = 0; col < 13; col++) {
                         nID = this.gensub(row,col);
                         divname = "div" + nID.toString().padStart(3, '0');
                         if ( this.flg_flip == 1 ) {
                             var two_nid = board_xref[ this.gensub(row,col) ]
-                            console.log(two_nid)
                             divname = "div" + two_nid[1].toString().padStart(3,'0');
 
                         }
                                         
                         const cellElement = document.getElementById(divname); 
                         var msg = divname + " " + cellElement.innerHTML;
-                        console.log("spec" ,divname);
                         var idx = Number(substr1(divname,3,3));
                         var row_o = this.toRowj(idx);
                         var col_o = this.toColj(idx);
@@ -1092,7 +670,7 @@ class ShogiGame {
                         if ( piece === "x") { cellElement.innerHTML=''; cellElement.innerHTML = substr1(divname,3,3); }
                         else {
                             cellElement.innerHTML='';
-                            let str_img = "images/" + this.ImageXref[ (piece) ];
+                            let str_img = "images/" + ImageXref[ (piece) ];
                             let img = document.createElement('img');
                             img.setAttribute('src',str_img);
                             let img_color = this.pieceColorShort(piece);
@@ -1141,7 +719,6 @@ class ShogiGame {
                         divname = "div" + nID.toString().padStart(3, '0');
                         if ( this.flg_flip == 1 ) {
                             var two_nid = board_xref[ this.gensub(row,col) ]
-                            console.log(two_nid)
                             divname = "div" + two_nid[1].toString().padStart(3,'0');
 
                         }
@@ -1152,16 +729,12 @@ class ShogiGame {
                 sync1();
 
 
-//                var deferred = $.deferred();
-//                console.log(deferred);
-
                 for (row = 0; row < 9; row++) {
                     for (col = 0; col < 13; col++) {
                         nID = this.gensub(row,col);
                         divname = "div" + nID.toString().padStart(3, '0');
                         if ( this.flg_flip == 1 ) {
                             var two_nid = board_xref[ this.gensub(row,col) ]
-                            console.log(two_nid)
                             divname = "div" + two_nid[1].toString().padStart(3,'0');
 
                         }
@@ -1176,7 +749,7 @@ class ShogiGame {
                         if ( piece === "x") { cellElement.innerHTML=''; cellElement.innerHTML = substr1(divname,3,3); }
                         else {
                             cellElement.innerHTML='';
-                            let str_img = "images/" + this.ImageXref[ (piece) ];
+                            let str_img = "images/" + ImageXref[ (piece) ];
                             let img = document.createElement('img');
                             img.setAttribute('src',str_img);
                             let img_color = this.pieceColorShort(piece);
@@ -1252,7 +825,7 @@ class ShogiGame {
                     pieceElement.className = 'captured-piece';
                     x++;
                     pieceElement.ID = 'CPB_' + x.toString().padStart(3,'0');
-                    pieceElement.textContent = this.pieces[ piece ];
+                    pieceElement.textContent = pieces_orig_set[ piece ];
                     pieceElement.addEventListener('click', () => this.onClick_CapturePieceBlack(-1, piece, 'black'));
                     blackElement.appendChild(pieceElement);
                 });
@@ -1264,7 +837,7 @@ class ShogiGame {
                         pieceElement.className = 'captured-piece';
                         x++;
                         pieceElement.ID = 'CPW_' + x.toString().padStart(3,'0');
-                        pieceElement.textContent = this.pieces[piece];
+                        pieceElement.textContent = pieces_orig_set[piece];
                         pieceElement.addEventListener('click', () => this.onClick_CapturePieceWhite(piece, 'white'));
                         whiteElement.appendChild(pieceElement);
                         }
@@ -1273,15 +846,15 @@ class ShogiGame {
             }
             
 
-            process_mv_bucket() {
-                mv_bucket.forEach(
-                        ([r, c]) => {
+            process_friend_piece_bucket() {
+                friend_piece_bucket.forEach(
+                        ([fnID,fPiece,r, c]) => {
                           
-                            const piece = board[ this.gensub(r,c) ];
+                            const piece = fPiece;
                             if (piece != "x") {
                                 const pieceElement = document.getElementsByName('span');
                                 pieceElement.className = this.pieceColor(piece);
-                                pieceElement.textContent = this.pieces[piece];
+                                pieceElement.textContent = pieces_orig_set[piece];
                                 let span_id = pieceElement.ID
                             }
                         }
@@ -1289,7 +862,7 @@ class ShogiGame {
                     
                     );
 
-                }
+            }
 
             make_yellow2(nID) {
                 const row = Math.trunc(nID);
@@ -1351,7 +924,9 @@ class ShogiGame {
 
                 // enter if ... on pass-1 only  this is work for a pre-move type
                 if ( this.pieceColorShort(piece) === this.currentPlayerColor && v_selection_flg === 0) {
-                    this.generate_move_list(this.currentPlayerColor);
+                    this.m_generate_move_list(this.currentPlayerColor);
+                    this.generateFriendPieceBucketMoves();
+                    this.print_bucket(); 
                     this.f_make_yellow_select_cell( nID );
                     v_selection_flg = 1;
                 }
@@ -1439,6 +1014,9 @@ class ShogiGame {
                         // Deselect
                         this.selectedCell = null;
                         this.clearHighlights(); 
+                        v_selection_flg = 0;
+                        friend_piece_bucket = [];
+                        friend_piece_bucket_moves = [];
                         return;
                     }
                     
@@ -1546,10 +1124,13 @@ class ShogiGame {
                 this.c1PieceFEN = piece;
 
                 if (this.flg_flip == 0) { 
-                    var arrPossibleMoves =  this.movesYouCanDo[ (this.c1PieceFEN) ];
+                    var arrPossibleMoves =  movesYouCanDo[ (this.c1PieceFEN) ];
                 }
                 else {
-                    var arrPossibleMoves =  this.movesYouCanDo_flip[ (this.c1PieceFEN) ];
+                    if (confirm('err001 movesYouCanDo_flip is needed')) {
+                        var nop = 1;
+                    }
+                    // var arrPossibleMoves =  this.moves ouCanDo_flip[ (this.c1PieceFEN) ];
                 }
 
                 return arrPossibleMoves;
@@ -1588,8 +1169,73 @@ class ShogiGame {
                 return;
             }
 
+
+            m_revamp_friend_piece_bucket_moves() {
+                debugger;
+                const checkBoard = new c_checkBoard();
+                checkBoard.set_boardc() ;
+                checkBoard.set_player_color(this.currentPlayerColor);
+                checkBoard.doMoveStillinCheck();
+                checkBoard.still_in_check();
+                // if yes can drop fix?
+                checkBoard.can_drop_fix();
+                
+                // if yes we are good
+                // if no this is checkmate
+
+                // jts needs code work
+                this.flg_blk_check=0; 
+                this.flg_whi_check=0;
+ 
+            }
+
+            generateFriendPieceBucketMoves() {
+                console.log ("start generateFriendPieceBucketMoves")
+                
+                for (var gx=0; gx < friend_piece_bucket.length; gx++ ) {
+                    var fnid = friend_piece_bucket[gx][0];   // 2-d array 1st elem is nid
+                    var fpiece = friend_piece_bucket[gx][1];
+                    var fpossibleMoves = this.getListOfSquaresYouCanMoveto(fnid);
+
+                    var fmoves = [];
+                    fmoves = this.getValidMoves(fnid,(fpossibleMoves));
+
+                    console.log(gx + " piece info " + fpiece + " " + fnid);
+                    if ( fmoves.length > 0 ) {
+                        var msg = "     "
+                        for (var y=0; y < fmoves.length; y++ ) {
+                            msg = msg + fmoves[y] + " "
+                        }
+                        console.log(msg)
+                    }
+                    friend_piece_bucket_moves.push( ([-1,fnid,fpiece,(fmoves)]) );
+
+                    //fmoves is an array of arrays 
+                    // fmoves.length = #number of moves the piece can do
+                    // fmoves.array is [ row , col ]  target space you can move to.
+
+                    if (this.flg_blk_check == 1 || this.flg_whi_check == 1 ) { 
+                        debugger;
+                        this.m_revamp_friend_piece_bucket_moves();
+                    }
+
+                
+                }
+
+            }
+
+            print_bucket() {
+                console.log("print moves size is " + friend_piece_bucket_moves.length);
+                for (var xpb=0; xpb < friend_piece_bucket_moves.length; xpb++) {
+                    var elem = friend_piece_bucket_moves[xpb];
+                    //console.log(xpb, " pr bucket ",elem[1],elem[2],elem[3]);
+
+                }
+            }
+
+
             // pass 1 
-            //  get the piece fen of the square you just clocked
+            //  get the piece fen of the square you just clicked
             //  convert to an nID
             //  read the move array and run the loop
 
@@ -1601,8 +1247,7 @@ class ShogiGame {
                 const selectedCell  = document.getElementById(divname);
                 
                 // jts get json value
-                // jts work in getvalidmoves
-
+               
                 // selected square turns yellow if there is a piece there and
                 // the piece is the correct color for the turn
                 selectedCell.classList.add('selected');
@@ -1631,6 +1276,9 @@ class ShogiGame {
                          
                         if ( loc_color !== this.currentPlayerColor && loc_color !== "none" ) {
                             // pass 1 - enemy square goes red
+                            var peek_at_enemy = board[  ( this.gensub(r,c) ) ];
+                            if ( loc_color = "white" && peek_at_enemy == "K") { this.flg_blk_check = 1;}
+                            if ( loc_color = "black" && peek_at_enemy == "k") { this.flg_whi_check = 1;}
                             cell.classList.add('enemy-piece');
                             v_move_ctr_for_pocket++;
                             this.sav_move_list_yel_green_red.push(  ( this.gensub(r,c) ) );
@@ -1651,6 +1299,40 @@ class ShogiGame {
                 // end of section highlightvalidmoves
                 var nop = 1;
             }
+
+            after_drop_check(piece, dnID) {
+                var msg = "!AFTDROP " + piece + " " + dnID.toString().padStart(3,'0'); 
+                v_move_array.push(msg);
+
+                let possibleMoves = this.getListOfSquaresYouCanMoveto(dnID);
+                //  onsole.log('possible moves', possibleMoves)
+                
+                
+                // pass1
+                //    validmoves contains a list of everything that should be green or red
+                var validMoves = this.getValidMoves(dnID, possibleMoves);
+
+                // pass1
+                //     your clicked square is now yellow from prev method call
+                //     the square of the enemy piece becomes red
+                //     the square of an empty spot becomes green
+                //     if zero most likely an error - you clicked wrong square (guess right now)
+                validMoves.forEach(
+                    ([r, c]) => {
+                        
+                        var loc_color = this.pieceColorShort(board[  ( this.gensub(r,c) ) ]); 
+                         
+                        if ( loc_color !== this.currentPlayerColor && loc_color !== "none" ) {
+                            var peek_at_enemy = board[  ( this.gensub(r,c) ) ];
+                            if ( loc_color = "white" && peek_at_enemy == "K") { this.flg_blk_check = 1;}
+                            if ( loc_color = "black" && peek_at_enemy == "k") { this.flg_whi_check = 1;}
+                        }                     
+                    }
+                );
+            }
+
+
+
             
             // needs work
             // I need to add/fix pawn drop logic
@@ -1735,14 +1417,17 @@ class ShogiGame {
 
                 
                     if (this.flg_flip == 0) { 
-                        var possibleMoves2 =  this.movesYouCanDo[ (this.c2PieceFEN) ];
+                        var possibleMoves2 =  movesYouCanDo[ (this.c2PieceFEN) ];
                     }
                     else {
-                        var possibleMoves2 =  this.movesYouCanDo_flip[ (this.c2PieceFEN) ];
+                        if (confirm('err002 movesYouCanDo_flip is needed')) {
+                            var nop = 1;
+                        }
+
+                        // var possibleMoves2 =  this.moves ouCanDo_flip[ (this.c2PieceFEN) ];
                     }
 
                     
-                    console.log(this.c2PieceFEN," possibleMoves2 ",possibleMoves2);
                     if ( possibleMoves2[0] == 2 ) {
                         console.log("error on moves slider");
                         debugger;
@@ -2014,11 +1699,13 @@ class ShogiGame {
          
                 // if the mustpromote routine was a success
                 // the piece is now +p, if so this if statement is always false
+                var destCol = this.toColj(toNID);
                 if ( 
-                      ( this.canPromote(piece, toNID) && this.flg_drop == 0) ||
-                      ( this.canPromote(piece, fromNID) && this.flg_drop == 0)
+                      ( this.canPromote(piece, toNID)   && this.flg_drop == 0 && destCol > 1 && destCol < 11 ) ||
+                      ( this.canPromote(piece, fromNID) && this.flg_drop == 0 && destCol > 1 && destCol < 11 )
                     ) 
                 {
+                    // ask here to promote
                     if (confirm('Promote this piece?')) {
                         msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0'); 
                         v_move_array.push(msg);
@@ -2054,12 +1741,19 @@ class ShogiGame {
                     fromNID.toString().padStart(3,'0') + move_type +
                     toNID.toString().padStart(3,'0') ;
                 v_move_array.push(move_string);
+
+
+
                 v_selection_flg = 0;
                 this.sav_move_list_yel_green_red = [] ; 
                 this.set_pawn_col(piece,toNID);
                 
                 this.renderBoard();
                 this.renderCapturedPieces();
+
+                if (move_type = '*') this.m_check_for_check(this.currentPlayerColor,piece,toNID);
+                if (this.flg_blk_check == 1 || this.flg_whi_check == 1) this.m_check_for_mate(this.currentPlayerColor);
+
                 this.switchPlayer();
                 this.updateStatus();
                 this.checkGameEnd();
@@ -2069,7 +1763,30 @@ class ShogiGame {
                 this.print_pawnlist("white", this.wpawn_col_list);
                 return;
             }
-            
+
+            // right now used on a drop -- check if drop caused check
+            m_check_for_check(Color,piece,toNID) {
+                var opp_color = "xxx"; 
+                if ( Color === "black") { 
+                    opp_color = "white"
+                } else {
+                    opp_color = "black"
+                } 
+
+                // am i in check after a drop/move?
+                // 1) see if you are in check
+                // 2) set the flag
+                this.after_drop_check(piece, toNID);
+
+                this.m_generate_move_list(opp_color);
+                this.generateFriendPieceBucketMoves();
+                console.log( "check status blk-" + this.flg_blk_check + " whi-" + this.flg_whi_check);
+            };
+
+            // jts code not ready yet
+            m_check_for_mate(Color) {};
+                
+
             onClickDropHere(row, col, nID) {
                 var piece = board[ this.gensub(row,col) ];
 
@@ -2086,6 +1803,7 @@ class ShogiGame {
                 }
                 
                 board[ this.gensub(row,col) ] =  this.dzPieceInHand;
+                var toNID = nID;
                 
                 const capturedArray = this.objCap_pieces_sav[this.currentPlayerColor];
                 const index = capturedArray.indexOf(this.dzPieceInHand);
@@ -2100,20 +1818,18 @@ class ShogiGame {
                 this.checkGameEnd();
                 this.process_cmd("1");
                 sync1();
-                this.end_move(fromNID , toNID, piece);
+                this.end_move(row, col, piece);
             }
 
-            end_move(fromNID , toNID, piece) {
-                var audio = null;
+            end_move(row, col, piece) {
+                
 
                 switch (true) {
                     case (piece == '+r' && piece == '+R') :
-                        audio = new Audio('sound/explosion.mp3');
-                         
+                        play_sound('sound/explosion.mp3');
                         break;
                     default :
-                        audio = new Audio('sound/1-click.mp3');
-                         
+                        play_sound('sound/1-click.mp3');
                         break;
                 }
                 
@@ -2123,17 +1839,9 @@ class ShogiGame {
                 var row = this.toRowj(nID)
                 if ( piece.length == 1) {
                     if ( ['L','P'].includes(piece) && row < 1 && this.flg_flip == 0) return true;
-                    
-
                     if ( ['l','p'].includes(piece) && row > 7 && this.flg_flip == 0) return true;
-                    
-
                     if ( ['N',].includes(piece) && row < 2 && this.flg_flip == 0) return true;
-                    
-
                     if ( ['n',].includes(piece) && row > 6 && this.flg_flip == 0) return true;
-                    
-
                 }
                 return false; 
             }
@@ -2172,6 +1880,7 @@ class ShogiGame {
                 this.renderBoard();
                 sync1();
             }
+
             onBtn_Flip(record) {
                 // zero noflip - 1 is flip
                 this.flg_flip = 1; 
@@ -2212,23 +1921,33 @@ class ShogiGame {
             
             checkGameEnd() {
                 // Simple check for king capture
-                let have_blackKing = false, have_whiteKing = false;
+                this.have_blackKing = false;
+                this.have_whiteKing = false;
+                var nop = 1;
                 
                 for (var rowg = 0; rowg < 9; rowg++) {
                     for (var colg = 0; colg < 13; colg++) {
-                        const piece = board[ this.gensub(rowg,colg) ];
-                        if (piece === 'K') { have_blackKing = true; }
-                        if (piece === 'k') { have_whiteKing = true; } 
+                        var piece = board[ this.gensub(rowg,colg) ];
+                        if (piece === 'K') { this.have_blackKing = true; }
+                        if (piece === 'k') { this.have_whiteKing = true; } 
                             
                     }
                 }
                 
-                if (!have_blackKing) {
+                if (this.have_blackKing == true) {
+                    nop =1
+                } else {  
                     this.gameOver = true;
-                    document.getElementById('status').textContent = 'Gote wins! King captured!';
-                } else if (!have_whiteKing) {
+                    document.getElementById('status').textContent = 'checkGameEnd Gote wins! King captured!';
+                    play_sound("sound/crowd-cheer.mp3");
+                }
+                
+                if (this.have_whiteKing == true ) {
+                    nop = 1
+                } else {
                     this.gameOver = true;
                     document.getElementById('status').textContent = 'Sente wins! King captured!';
+                    play_sound("sound/applause.mp3")
                 }
             }
             
@@ -2240,9 +1959,20 @@ class ShogiGame {
             }
 
             updateStatus() {
-                let gcolor = "";
-                document.getElementById('current-player').textContent = 
-                    this.currentPlayerColor === 'black' ? '(Sente)' : '(Gote)';
+                // gcolor = gray color - set the pieces that are not in-turn to slightly gray (fade them)
+                var gcolor = "";
+                var outmsg;
+
+                if (this.currentPlayerColor == "black") {
+                    outmsg = "(Sente)"
+                } else {
+                    outmsg = "(Gote)"
+                }
+
+                if ( this.flg_blk_check == 1 )  { outmsg = outmsg + " Black King is in check"}
+                if ( this.flg_whi_check == 1 )  { outmsg = outmsg + " White King is in check"}
+
+                document.getElementById('current-player').textContent = outmsg; 
                 document.getElementById('move-count').textContent = this.moveCount;
                 
                 if (!this.gameOver) {
@@ -2301,7 +2031,7 @@ class ShogiGame {
 
             
 
-            f_undo_cap(cmd) {
+            m_undo_cap(cmd) {
                 var line1 = cmd;
                 const rxfind = / /;
                 const rxout = line1.split(rxfind); 
@@ -2318,7 +2048,7 @@ class ShogiGame {
             
            
             // msg = "!PROMOTE " + piece + " " + from_nID.toString().padStart(3,'0');
-            f_undo_promote(cmd) {
+            m_undo_promote(cmd) {
                 var line1 = cmd;
                 const rxfind = / /;
                 const rxout = line1.split(rxfind); 
@@ -2326,7 +2056,7 @@ class ShogiGame {
                 return;
             }
 
-            f_undo_drop(cmd) {
+            m_undo_drop(cmd) {
                 var line1 = cmd;
                 const rxfind = / /;
                 const rxout = line1.split(rxfind); 
@@ -2338,7 +2068,7 @@ class ShogiGame {
             // 01234567890123  - adjpos values
             //      012345678 - substr1 values
             // mxxx +P nid-nid
-            f_undo_move(cmd) {
+            m_undo_move(cmd) {
                 var adjpos = 0;
                 var line1 = cmd; 
                 var char1 = substr1(line1,5,1); 
@@ -2352,13 +2082,13 @@ class ShogiGame {
                 var toNID   = Number(substr1(line1,(adjpos+5),3));
                 var loc1 = fromNID; 
                 var loc2 = toNID; 
-                console.log("undo move ", loc1,loc2)
+    
                 board[loc1] = char1;
                 board[loc2] = "x";
 
             }
 
-            f_move_back_process(cmd,eop,mctr) {
+            m_move_back_process(cmd,eop,mctr) {
                 var line1 = cmd;
                 
                 var char1 = substr1(line1,0,1);
@@ -2369,13 +2099,13 @@ class ShogiGame {
                         // if the m array-element is eop=1 this is an end-of-process
                         // indicator.  I want to skip the move and bubble up back to the
                         // while loop 
-                        if ( mctr == 1) { this.f_undo_move(cmd); break; }
+                        if ( mctr == 1) { this.m_undo_move(cmd); break; }
                     case "!":
-                        if (line1.includes("!CAP "))     { this.f_undo_cap(cmd) ; break;}
-                        if (line1.includes("!DROP "))    { this.f_undo_drop(cmd); break;  }
+                        if (line1.includes("!CAP "))     { this.m_undo_cap(cmd) ; break;}
+                        if (line1.includes("!DROP "))    { this.m_undo_drop(cmd); break;  }
                         if (line1.includes("!FLIP "))    { this.onBtn_FlipBack(0); break;}
                         if (line1.includes("!FLIPBACK ")) { this.onBtn_Flip(0); break;}
-                        if (line1.includes("!PROMOTE ")) { this.f_undo_promote(cmd); break;}
+                        if (line1.includes("!PROMOTE ")) { this.m_undo_promote(cmd); break;}
                         break;  
                 }
                 return;
@@ -2403,13 +2133,13 @@ class ShogiGame {
                 while (eop > 0) {
                     if ( v_move_array.length == 0) { eop=0; break;}
                     var cmd = v_move_array[ (v_move_array.length - 1) ];
-                    console.log("back is " + cmd);
+                    
                     var char1 = substr1(cmd,0,1);
                      
                     if (char1 == "m") {
                         mctr++;
                         if (mctr < 2  ) {
-                            this.f_move_back_process(cmd,eop,mctr) 
+                            this.m_move_back_process(cmd,eop,mctr) 
                             this.renderBoard();
                             this.switchPlayer();
                             this.moveCount--;
@@ -2420,7 +2150,7 @@ class ShogiGame {
                     }
 
                     if (char1 != "m") {
-                        this.f_move_back_process(cmd,eop,mctr) 
+                        this.m_move_back_process(cmd,eop,mctr) 
                         this.renderBoard();
                         this.updateStatus();
                         v_move_array.pop();
@@ -2442,7 +2172,7 @@ class ShogiGame {
                 this.flg_flip = 0;
                 this.clearCells();
                 this.initializeBoard();
-                
+                sync1();
                 this.renderBoard();
                 this.renderCapturedPieces();
                 this.currentPlayerColor = 'white';
@@ -2473,4 +2203,5 @@ Enemy pieces you can capture are highlighted in pink.
 }
         
 // Initialize game
+v_selection_flg=0;
 const game = new ShogiGame();
