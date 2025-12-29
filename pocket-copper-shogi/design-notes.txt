@@ -1,0 +1,16 @@
+domovesstillincheck
+    empty all arrays
+    m_populate_piece_bucket
+       friend_piece_bucket is now populated.
+       enemy_piece_bucket is now populated.
+
+still_in_check               <== not populated properly needs parms piece,nid,targetpiece,new_nid
+
+piece,nID,targetpiece,new_id
+(this.playercolor=white)
+friend_piece_bucket (loaded and ready)
+    nid, piece_FEN, r,c <--- location of piece
+** friend_piece_bucket_moves is empty right now (still in check)
+enemy_piece_bucket (loaded_and_ready)
+** enemy_piece_bucket_moves is empty right now (in function still_in_check)
+

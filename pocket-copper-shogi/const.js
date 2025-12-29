@@ -365,8 +365,9 @@ function simulateClickAtCursor() {
 }
 
 async function play_sound(file1) {
-     const audio = new Audio(file1);
-     await audio.play();
+    console.log("play sound called for file: " + file1);
+    const audio = new Audio(file1);
+    await audio.play();
 }
 
 

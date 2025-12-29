@@ -1173,9 +1173,13 @@ class ShogiGame {
             m_revamp_friend_piece_bucket_moves() {
                 debugger;
                 const checkBoard = new c_checkBoard();
-                checkBoard.set_boardc() ;
+                checkBoard.set_boardc(this.flg_blk_check, this.flg_whi_check );
+                
                 checkBoard.set_player_color(this.currentPlayerColor);
                 checkBoard.doMoveStillinCheck();
+                console.log("cb " + checkBoard.friend_piece_bucket2);
+                console.log("cb mov" + checkBoard.friend_piece_bucket2_moves);
+
                 checkBoard.still_in_check();
                 // if yes can drop fix?
                 checkBoard.can_drop_fix();
@@ -1788,6 +1792,7 @@ class ShogiGame {
                 
 
             onClickDropHere(row, col, nID) {
+                console.log("onClickDropHere at " + row + "," + col + " nID " + nID);
                 var piece = board[ this.gensub(row,col) ];
 
                 // you must drop on an empty square, that is a value of x
