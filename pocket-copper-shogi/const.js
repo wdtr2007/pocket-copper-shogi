@@ -6,7 +6,7 @@ const ImageXref = {
     "+G" :    "bE.png",                      
     "+g" :    "wE.png",                      
     "+L" :    "bM.png",                      
-    "+m" :    "wM.png",                      
+    "+l" :    "wM.png",                      
     "+N" :   "bpN.png",     
     "+n" :   "wpN.png",     
     "+P" :    "bT.png",
@@ -41,7 +41,7 @@ const ImageXref = {
 //    example to move 1 square north you subtract 13
 //    from the nID.
 
-const movesYouCanDo = {
+const Json_list_movesYouCanDo = {
     "K" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
     "G" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
     "S" :  [ 1,5,       -12,-13,-14, 12,   14  ],
@@ -142,7 +142,7 @@ const movesYouCanDo = {
 
 
 
-const del_movesYouCanDo_flip = {
+const del_Json_list_movesYouCanDo_flip = {
     "k" :  [ 1,8,-1, 1, -12,-13,-14, 12,13,14  ],
     "g" :  [ 1,6,-1, 1, -12,-13,-14,    13     ],
     "s" :  [ 1,5,       -12,-13,-14, 12,   14  ],
@@ -318,6 +318,7 @@ var board_sav = [];
 var board_xref = [];
 var board_element = [];
 var boardc = [];
+var boardd = [];
 var checkBoard = null;
 
 // end of global vars
@@ -424,6 +425,8 @@ async function initializePage() {
 
 // Call the async function
 initializePage();
+
+
 
 
 

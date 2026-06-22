@@ -26,6 +26,7 @@ class ShogiGame {
                 this.flg_whi_check = 0;
                 this.flg_blk_check = 0;
                 this.flg_flip = 0;
+                this.got_moves = 0;
                 this.board_xref = null;
                 this.divinfo = " "
                 this.wpawn_col_list = [0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -43,6 +44,8 @@ class ShogiGame {
 
                 this.have_blackKing = true;
                 this.have_whiteKing = true;
+
+                this.checkBoard = new c_checkBoard();
                 
 
 
@@ -93,6 +96,8 @@ class ShogiGame {
             // used in pass2
             //   on pass2 .... v_selection_flg=1
             onClick_cell( str_nID ) {
+                console.log("onClick_cell " + str_nID);
+
                 this.divinfo = str_nID;
                 if (this.gameOver) return;
                 
@@ -158,7 +163,7 @@ class ShogiGame {
                 const mvTextarea = document.getElementById("mvInfo");
                 mvTextarea.innerHTML = '';
                 mvTextarea.value = clob_of_moves;
-
+                mvTextarea.scrollTop = mvTextarea.scrollHeight;
 
             }
 
@@ -514,7 +519,8 @@ class ShogiGame {
                             cell.appendChild(img)
                         }
 
-                        cell.addEventListener('click', () => this.onClick_cell(divname));
+                        cell.addEventListener('click', () => this.onClick_cell(divname) );
+                        
                         boardElement.appendChild(cell);
                         var nop = 0;
                         nop++;
@@ -527,6 +533,10 @@ class ShogiGame {
                 // end of method
                 return; 
                 
+            }
+
+            onClick_return() {
+                return;
             }
 
     
@@ -551,7 +561,7 @@ class ShogiGame {
                         ctr--;
                         
 
-                        cell.addEventListener('click', () => this.onClick_cell( divname ) );
+                        cell.addEventListener('click', () => this.onClick_cell( divname )  );
                         boardElement.appendChild(cell);
                         var nop = 0;
                         nop++;
@@ -588,7 +598,7 @@ class ShogiGame {
                         ctr--;
                         
 
-                        cell.addEventListener('click', () => this.onClick_cell( divname ) );
+                        cell.addEventListener('click', () => this.onClick_cell( divname )  );
                         boardElement.appendChild(cell);
                         var nop = 0;
                         nop++;
@@ -626,7 +636,7 @@ class ShogiGame {
                         ctr++;
                         
 
-                        cell.addEventListener('click', () => this.onClick_cell( cell.id ) );
+                        cell.addEventListener('click', () => this.onClick_cell( cell.id )   );
                         boardElement.appendChild(cell);
                         var nop = 0;
                         nop++;
@@ -826,7 +836,7 @@ class ShogiGame {
                     x++;
                     pieceElement.ID = 'CPB_' + x.toString().padStart(3,'0');
                     pieceElement.textContent = pieces_orig_set[ piece ];
-                    pieceElement.addEventListener('click', () => this.onClick_CapturePieceBlack(-1, piece, 'black'));
+                    pieceElement.addEventListener('click', () => this.onClick_CapturePieceBlack(-1, piece, 'black') );
                     blackElement.appendChild(pieceElement);
                 });
                 
@@ -838,7 +848,7 @@ class ShogiGame {
                         x++;
                         pieceElement.ID = 'CPW_' + x.toString().padStart(3,'0');
                         pieceElement.textContent = pieces_orig_set[piece];
-                        pieceElement.addEventListener('click', () => this.onClick_CapturePieceWhite(piece, 'white'));
+                        pieceElement.addEventListener('click', () => this.onClick_CapturePieceWhite(piece, 'white') );
                         whiteElement.appendChild(pieceElement);
                         }
                 );
@@ -893,6 +903,8 @@ class ShogiGame {
 
 
             onClick_cell_pass1(nID,piece) {
+                console.log("onClick_cell_pass1 " + nID + "," + piece);
+
 
                 // pass1 pocket pocket col0(pre-move drop) col12(pre-move drop)
 
@@ -950,10 +962,8 @@ class ShogiGame {
             }
 
             onClick_cell_pass2(nID,piece) {
+                console.log("onClick_cell_pass2 " + nID + "," + piece);
 
-                // jts this is a un-testped patch
-                // if you are in this method --- I think
-                //  this selected cell is always on I need to test this dec 06
                 if ( this.selectedCell) {
                     this.onClick_cell_pass2_move_type(nID);
                     return;
@@ -1124,10 +1134,10 @@ class ShogiGame {
                 this.c1PieceFEN = piece;
 
                 if (this.flg_flip == 0) { 
-                    var arrPossibleMoves =  movesYouCanDo[ (this.c1PieceFEN) ];
+                    var arrPossibleMoves =  Json_list_movesYouCanDo[ (this.c1PieceFEN) ];
                 }
                 else {
-                    if (confirm('err001 movesYouCanDo_flip is needed')) {
+                    if (confirm('err001 Json_list_movesYouCanDo_flip is needed')) {
                         var nop = 1;
                     }
                     // var arrPossibleMoves =  this.moves ouCanDo_flip[ (this.c1PieceFEN) ];
@@ -1148,7 +1158,7 @@ class ShogiGame {
                     if ( iamempty == 1 ) {
                         const cell = PocketCell;
                         cell.classList.add('valid-move');
-                        cell.addEventListener('click', () => this.onClickDropHere(0, 0, 0));
+                        cell.addEventListener('click', () => this.onClickDropHere(0, 0, 0) );
                         this.sav_move_list_yel_green_red.push( this.gensub(0,0) );
                     }
                 } else {
@@ -1160,7 +1170,7 @@ class ShogiGame {
                     if ( iamempty == 1 ) {
                         const cell = PocketCell;
                         cell.classList.add('valid-move');
-                        cell.addEventListener('click', () => this.onClickDropHere(8,12,116));
+                        cell.addEventListener('click', () => this.onClickDropHere(8,12,116) );
                         this.sav_move_list_yel_green_red.push( this.gensub(8,12) );
                     }
                 }
@@ -1170,28 +1180,53 @@ class ShogiGame {
             }
 
 
-            m_revamp_friend_piece_bucket_moves() {
+            m_revamp_friend_piece_bucket_moves(color) {
+                console.log(" m_revamp_friend_piece_bucket_moves " + color)
                 debugger;
-                const checkBoard = new c_checkBoard();
-                checkBoard.set_boardc(this.flg_blk_check, this.flg_whi_check );
                 
-                checkBoard.set_player_color(this.currentPlayerColor);
-                checkBoard.doMoveStillinCheck();
-                console.log("cb " + checkBoard.friend_piece_bucket2);
-                console.log("cb mov" + checkBoard.friend_piece_bucket2_moves);
+                console.log("cb " + this.checkBoard.friend_piece_bucket2);
+                console.log("cb mov " + this.checkBoard.friend_piece_bucket3_moves);
+                console.log("cb move ctr " + this.checkBoard.friend_piece_bucket3_moves.length)
 
-                checkBoard.still_in_check();
+                // this.checkBoard.still_in_check(); <- removed 1/7/2026 I do not think needed
                 // if yes can drop fix?
-                checkBoard.can_drop_fix();
+                // this.checkBoard.can_drop_fix();
                 
                 // if yes we are good
                 // if no this is checkmate
 
-                // jts needs code work
-                this.flg_blk_check=0; 
-                this.flg_whi_check=0;
+                debugger;
+                
+                this.flg_blk_check = this.checkBoard.flg_blk_check2; 
+                this.flg_whi_check = this.checkBoard.flg_whi_check2;
+
+                if ( color == "white" & this.flg_whi_check == 1 & this.checkBoard.friend_piece_bucket3_moves.length < 1) {
+                     confirm('I think white is in checkmate');
+                }
+
+                if ( color == "black" & this.flg_blk_check == 1 & this.checkBoard.friend_piece_bucket3_moves.length < 1) {
+                     confirm('I think black is in checkmate');
+                }
+
  
             }
+
+            m_reset_onclick(color,bucket3_moves) {
+                console.log("m_reset_onclick");
+                for (var r=0; r < 9; r++ ) {
+                    for( var c=0; c < 13; c++) {
+                        if ( c >= 2 & c <= 10 ) {
+                            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                            cell.addEventListener('click', () => this.onClick_return()  );
+                        }
+
+                    }
+                }
+                debugger;
+                console.log(bucket3_moves);
+                return;
+            }
+
 
             generateFriendPieceBucketMoves() {
                 console.log ("start generateFriendPieceBucketMoves")
@@ -1204,24 +1239,42 @@ class ShogiGame {
                     var fmoves = [];
                     fmoves = this.getValidMoves(fnid,(fpossibleMoves));
 
-                    console.log(gx + " piece info " + fpiece + " " + fnid);
-                    if ( fmoves.length > 0 ) {
-                        var msg = "     "
-                        for (var y=0; y < fmoves.length; y++ ) {
-                            msg = msg + fmoves[y] + " "
-                        }
-                        console.log(msg)
-                    }
                     friend_piece_bucket_moves.push( ([-1,fnid,fpiece,(fmoves)]) );
 
                     //fmoves is an array of arrays 
                     // fmoves.length = #number of moves the piece can do
                     // fmoves.array is [ row , col ]  target space you can move to.
 
-                    if (this.flg_blk_check == 1 || this.flg_whi_check == 1 ) { 
+                    var color = "xxx";
+                    this.got_moves = 0;
+
+                    if (this.flg_whi_check == 1) { color = "white"};
+                    if (this.flg_blk_check == 1) { color = "black"};
+
+                    if (this.flg_blk_check == 1 || this.flg_whi_check == 1 ) {
+                        console.log("someone is in check - you need to revamp generateFriendPieceBucketMoves")
+                     
+                        this.checkBoard.set_boardc(this.flg_blk_check, this.flg_whi_check, color );
+                        this.checkBoard.set_player_color(color);
+                        this.checkBoard.doMoveStillinCheck2();
+
                         debugger;
-                        this.m_revamp_friend_piece_bucket_moves();
+                        if (this.flg_whi_check == 1) {
+                            this.m_revamp_friend_piece_bucket_moves("white");
+                            this.got_moves = 1;
+                            this.m_reset_onclick("white",this.checkBoard.friend_piece_bucket3_moves);
+                        }
+                        if (this.flg_blk_check == 1) {
+                            this.m_revamp_friend_piece_bucket_moves("black");
+                            this.got_moves = 1;
+                            this.m_reset_onclick("black",this.checkBoard.friend_piece_bucket3_moves);
+                        }
                     }
+
+                    // we went into some recursion and got a list of all valid moves
+                    // the all click events have been cleared except dropped areas
+                    // jts design a section to populate and setup on_click again
+                    if (this.got_moves == 1 ) break;    
 
                 
                 }
@@ -1232,7 +1285,18 @@ class ShogiGame {
                 console.log("print moves size is " + friend_piece_bucket_moves.length);
                 for (var xpb=0; xpb < friend_piece_bucket_moves.length; xpb++) {
                     var elem = friend_piece_bucket_moves[xpb];
-                    //console.log(xpb, " pr bucket ",elem[1],elem[2],elem[3]);
+                    var pbp = elem[2];
+                    var pbnid = elem[1].toString()
+                    var arrrc = elem[3]; // a setof x arrays in duo format
+                    console.log(pbp+"-"+pbnid);
+                    var msgp = "";
+                    for (var ypb=0; ypb < arrrc.length; ypb++) {
+                        var r = arrrc[ypb][0];
+                        var c = arrrc[ypb][1];
+                        var pb_nid = this.gensub(r,c);
+                        msgp = msgp + pb_nid.toString() + "|";
+                    }
+                    console.log("    " + msgp) 
 
                 }
             }
@@ -1376,7 +1440,7 @@ class ShogiGame {
                             case ( src_piece == 'N') :
                                 if ( row <  2 ) ok_to_drop = 0; break;
                             case ( src_piece == 'n') :                                
-                                if ( row > 10 ) ok_to_drop = 0; break;
+                                if ( row > 6 ) ok_to_drop = 0; break;
                         }
 
                         var iamempty = 0;
@@ -1386,7 +1450,7 @@ class ShogiGame {
                             const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                             cell.classList.add('valid-move');
                             this.sav_move_list_yel_green_red.push( (this.gensub(row,col)) )
-                            cell.addEventListener('click', () => this.onClickDropHere(row, col, hl_dz_nID));
+                            cell.addEventListener('click', () => this.onClickDropHere(row, col, hl_dz_nID) );
                         }
                     }
                 }
@@ -1421,10 +1485,10 @@ class ShogiGame {
 
                 
                     if (this.flg_flip == 0) { 
-                        var possibleMoves2 =  movesYouCanDo[ (this.c2PieceFEN) ];
+                        var possibleMoves2 =  Json_list_movesYouCanDo[ (this.c2PieceFEN) ];
                     }
                     else {
-                        if (confirm('err002 movesYouCanDo_flip is needed')) {
+                        if (confirm('err002 Json_list_movesYouCanDo_flip is needed')) {
                             var nop = 1;
                         }
 
@@ -1788,7 +1852,105 @@ class ShogiGame {
             };
 
             // jts code not ready yet
-            m_check_for_mate(Color) {};
+            m_check_for_mate(Color) {
+                // if black ... check if white is in mate
+                if (Color == "black") {
+                    if (this.checkBoard.friend_piece_bucket3_moves.length == 0 ) {
+                        console.log("Black has won");
+                    } else {
+                        this.m_turn_on_clicks();
+                    }
+                }
+                if (Color == "white") {
+                    if (this.checkBoard.friend_piece_bucket3_moves.length == 0 ) {
+                        console.log("White has won");
+                    } else {
+                        this.m_turn_on_clicks();
+                    }
+
+                }
+            }
+
+            onClick_must_move(start_nid,start_piece,dest_nid) {
+                this.make_yellow(start_nid);
+                this.make_move(start_nid,dest_nid);
+            }
+
+            
+
+            m_turn_on_clicks() {
+                
+                const xxx = document.getElementById('Name');
+                
+                for (let row = 0; row <= 8; row++) {
+                    for (let col = 0; col <= 12; col++) {
+                        
+                        
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        if ( col == 1 || col == 11 ) cell.className = 'cell2'; 
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        var nID = this.gensub(row,col);
+                        cell.dataset.nid = nID;
+                        divname = "div" + ctr.toString().padStart(3, '0');
+                        cell.id = divname; 
+                        ctr++;
+                        
+
+                        const piece = board[ this.gensub(row,col) ];
+                        if (piece) {
+                            const pieceElement = document.createElement('span');
+                            pieceElement.className = this.pieceColor(piece);
+                            if ( piece == "x") { pieceElement.textContent = " "; } 
+                            else { pieceElement.textContent = piece; } 
+                            let span_id = "span" + row.toString().padStart(2,'0') + col.toString().padStart(2,'0')  
+                            pieceElement.ID = span_id
+                            // cell.appendChild(pieceElement);
+                        }
+                        
+                        
+                        if ( piece !== "x") {
+                            let str_img = "images/" + ImageXref[ (piece) ];
+                            let img = document.createElement('img');
+                            img.setAttribute('src',str_img);
+                            let img_color = this.pieceColorShort(piece);
+                            let str_img_class = "img" + img_color;
+                            img.setAttribute('class',str_img_class);
+                            if ( this.view == 'white' ) img.style.transform= "rotate(180deg)";
+                            else                        img.style.transform= "rotate(0deg)";
+                            cell.appendChild(img)
+                        }
+
+                        cell.addEventListener('click', () => this.onClick_cell(divname) );
+                        
+                        boardElement.appendChild(cell);
+                        var nop = 0;
+                        nop++;
+
+                        
+                        // END OF COL LOOP
+                    }
+                    // end of row loop
+                }
+
+                
+
+                var divname;
+                for (var cx=0; cx < this.checkBoard.friend_piece_bucket3_moves.length; cx++) {
+                    var arr1 = this.checkBoard.friend_piece_bucket3_moves[cx];
+                    var start_nid = arr1[1];
+                    var start_piece = arr1[2]
+                    var dest_nid = arr1[3]
+                    divname = "div" + start_nid.toString().padStart(3, '0');
+                    var cell = document.getElementById(divname);
+                    if (cx == 0) {
+                        cell.parentNode.replaceChild(cell.cloneNode(true),cell)
+                    }
+                    cell.addEventListener('click', () => this.onClick_must_move(start_nid,start_piece,dest_nid) );
+                      
+                }
+            }
                 
 
             onClickDropHere(row, col, nID) {
@@ -1989,18 +2151,15 @@ class ShogiGame {
                         msg = "Gote's turn ";
                         gcolor = "white"; 
                     }
-                    if (this.view == "black" ) { msg = msg + "- Sente's view " + this.flg_flip.toString();}
-                    if (this.view == "white" ) { msg = msg + "- Gote's view "  + this.flg_flip.toString();}
+                    if (this.view == "black" ) { msg = msg + "- Sente's view " ;}
+                    if (this.view == "white" ) { msg = msg + "- Gote's view "  ;}
                     
-                    let msg1 = this.divinfo + "-" + 
-                               this.toRowj(Number(substr1(this.divinfo,3,3))).toString() + "-" + 
-                               this.toColj(Number(substr1(this.divinfo,3,3))).toString();
-                    document.getElementById('status').textContent = msg + "-" + msg1; 
+                    document.getElementById('status').textContent = msg ; 
                         
                     this.renderGrayNess(gcolor);
   
                     var domtextarea = document.getElementById('mvInfo');
-                    domtextarea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    domtextarea.scrollTop = domtextarea.scrollHeight;
                     sync1();
                 }
 
@@ -2209,4 +2368,5 @@ Enemy pieces you can capture are highlighted in pink.
         
 // Initialize game
 v_selection_flg=0;
+
 const game = new ShogiGame();
